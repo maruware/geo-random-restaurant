@@ -241,6 +241,10 @@ button:disabled {
   padding: 30px;
   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s;
+  width: 100%; /* 幅を明示的に指定 */
+  max-width: 100%; /* 最大幅を制限 */
+  box-sizing: border-box; /* ボーダーボックスを指定 */
+  overflow: hidden; /* はみ出しを防ぐ */
 }
 
 .restaurant-card:hover {
@@ -317,19 +321,26 @@ button:disabled {
   gap: 15px;
   margin-top: 25px;
   flex-wrap: wrap;
+  width: 100%; /* 親要素の幅を確実に使用 */
 }
 
 .maps-button {
   background: #007bff;
   color: white;
   text-decoration: none;
-  padding: 12px 24px;
+  padding: 12px 16px; /* パディングを少し減らす */
   border-radius: 8px;
   font-weight: 500;
   transition: all 0.2s;
   flex: 1;
   text-align: center;
-  min-width: 200px;
+  min-width: 0;
+  word-break: break-word;
+  box-sizing: border-box; /* ボーダーボックスを明示的に指定 */
+  max-width: 100%; /* 最大幅を制限 */
+  overflow: hidden; /* はみ出しを防ぐ */
+  white-space: nowrap; /* 一行に収める */
+  text-overflow: ellipsis; /* 長すぎる場合は省略記号 */
 }
 
 .maps-button:hover {
@@ -344,13 +355,10 @@ button:disabled {
   background: #6f42c1;
   color: white;
   flex: 1;
-  min-width: 150px;
-}
-
-.retry-button:hover {
-  background: #5a36a3;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(111, 66, 193, 0.3);
+  min-width: 0;
+  box-sizing: border-box; /* ボーダーボックスを明示的に指定 */
+  max-width: 100%; /* 最大幅を制限 */
+  overflow: hidden; /* はみ出しを防ぐ */
 }
 
 /* アニメーション */
@@ -436,5 +444,44 @@ button:disabled {
 
   .restaurant-card {
     padding: 15px;
+  }
+
+  /* 小さい画面でのボタン調整 */
+  .actions {
+    gap: 10px; /* ギャップを小さくする */
+  }
+
+  .maps-button {
+    padding: 10px 12px; /* さらにパディングを減らす */
+    font-size: 14px; /* フォントサイズを小さくする */
+  }
+
+  .retry-button {
+    padding: 10px 12px;
+    font-size: 14px;
+  }
+}
+
+/* 非常に小さい画面（320px以下）への対応 */
+@media (max-width: 320px) {
+  .restaurant-card {
+    padding: 10px;
+    margin: 0 5px;
+  }
+
+  .actions {
+    gap: 8px;
+  }
+
+  .maps-button,
+  .retry-button {
+    padding: 8px 10px;
+    font-size: 13px;
+    border-radius: 6px;
+  }
+
+  .maps-button {
+    /* 絵文字とテキストを短縮 */
+    font-size: 12px;
   }
 }
