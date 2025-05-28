@@ -1,0 +1,33 @@
+/* 星評価 */
+.rating {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.stars {
+  display: flex;
+  gap: 2px;
+}
+
+.star {
+  font-size: 20px;
+}
+
+.star.full {
+  color: #ffc107;
+}
+
+.star.half {
+  color: #ffc107;
+}
+
+.star.empty {
+  color: #e9ecef;
+}
+
+.rating-value {
+  color: #6c757d;
+  font-weight: 500;
+}

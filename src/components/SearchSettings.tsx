@@ -1,4 +1,5 @@
 import type { SearchSettings } from "../types";
+import "./SearchSettings.css";
 
 interface SearchSettingsProps {
   settings: SearchSettings;

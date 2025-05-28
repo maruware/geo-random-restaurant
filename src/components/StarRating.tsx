@@ -1,3 +1,5 @@
+import "./StarRating.css";
+
 interface StarRatingProps {
   rating: number;
 }

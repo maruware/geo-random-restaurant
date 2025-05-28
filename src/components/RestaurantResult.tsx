@@ -1,6 +1,7 @@
 import type { Restaurant } from "../types";
 import { StarRating } from "./StarRating";
 import { getGoogleMapsUrl } from "../utils/googleMaps";
+import "./RestaurantResult.css";
 
 interface RestaurantResultProps {
   restaurant: Restaurant;

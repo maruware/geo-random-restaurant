@@ -81,68 +81,6 @@
   gap: 30px;
 }
 
-/* 設定セクション */
-.settings {
-  background: #f8f9fa;
-  padding: 25px;
-  border-radius: 12px;
-  border: 1px solid #e9ecef;
-}
-
-.settings h2 {
-  margin: 0 0 20px 0;
-  color: #495057;
-  font-size: 1.3rem;
-}
-
-.setting-group {
-  display: flex;
-  align-items: center;
-  margin-bottom: 15px;
-  gap: 15px;
-}
-
-.setting-group:last-child {
-  margin-bottom: 0;
-}
-
-.setting-group label {
-  min-width: 100px;
-  font-weight: 500;
-  color: #495057;
-}
-
-.setting-group select {
-  flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  background: white;
-  color: #212529;
-  font-size: 14px;
-  transition: border-color 0.2s;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml;charset=utf-8,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
-  background-position: right 8px center;
-  background-repeat: no-repeat;
-  background-size: 16px;
-  padding-right: 32px;
-}
-
-.setting-group select:focus {
-  outline: none;
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-}
-
-.setting-group select option {
-  background: white;
-  color: #212529;
-  padding: 8px;
-}
-
 /* ボタンの共通スタイル */
 button {
   padding: 12px 24px;
@@ -161,35 +99,6 @@ button {
 button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-/* 現在地取得ボタン */
-.location-section {
-  text-align: center;
-}
-
-.location-button {
-  background: #28a745;
-  color: white;
-  padding: 15px 30px;
-  font-size: 18px;
-}
-
-.location-button:hover:not(:disabled) {
-  background: #218838;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
-}
-
-.location-info {
-  margin-top: 15px;
-  padding: 10px;
-  background: #d4edda;
-  border: 1px solid #c3e6cb;
-  border-radius: 6px;
-  color: #155724;
-  font-family: monospace;
-  display: inline-block;
 }
 
 /* 検索ボタン */
@@ -222,157 +131,6 @@ button:disabled {
   font-weight: 500;
 }
 
-/* レストラン結果表示 */
-.restaurant-result {
-  animation: slideIn 0.5s ease-out;
-}
-
-.restaurant-result h2 {
-  text-align: center;
-  margin-bottom: 20px;
-  color: #495057;
-  font-size: 1.5rem;
-}
-
-.restaurant-card {
-  background: white;
-  border: 1px solid #dee2e6;
-  border-radius: 15px;
-  padding: 30px;
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
-  transition: transform 0.2s;
-  width: 100%; /* 幅を明示的に指定 */
-  max-width: 100%; /* 最大幅を制限 */
-  box-sizing: border-box; /* ボーダーボックスを指定 */
-  overflow: hidden; /* はみ出しを防ぐ */
-}
-
-.restaurant-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.15);
-}
-
-.restaurant-card h3 {
-  margin: 0 0 15px 0;
-  color: #212529;
-  font-size: 1.8rem;
-  font-weight: 600;
-}
-
-/* 星評価 */
-.rating {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 15px;
-}
-
-.stars {
-  display: flex;
-  gap: 2px;
-}
-
-.star {
-  font-size: 20px;
-}
-
-.star.full {
-  color: #ffc107;
-}
-
-.star.half {
-  color: #ffc107;
-}
-
-.star.empty {
-  color: #e9ecef;
-}
-
-.rating-value {
-  color: #6c757d;
-  font-weight: 500;
-}
-
-/* 住所 */
-.address {
-  margin: 15px 0;
-  color: #6c757d;
-  font-size: 16px;
-}
-
-/* 営業状況 */
-.status {
-  margin: 15px 0;
-  font-weight: 500;
-  font-size: 16px;
-}
-
-.status.open {
-  color: #28a745;
-}
-
-.status.closed {
-  color: #dc3545;
-}
-
-/* アクションボタン */
-.actions {
-  display: flex;
-  gap: 15px;
-  margin-top: 25px;
-  flex-wrap: wrap;
-  width: 100%; /* 親要素の幅を確実に使用 */
-}
-
-.maps-button {
-  background: #007bff;
-  color: white;
-  text-decoration: none;
-  padding: 12px 16px; /* パディングを少し減らす */
-  border-radius: 8px;
-  font-weight: 500;
-  transition: all 0.2s;
-  flex: 1;
-  text-align: center;
-  min-width: 0;
-  word-break: break-word;
-  box-sizing: border-box; /* ボーダーボックスを明示的に指定 */
-  max-width: 100%; /* 最大幅を制限 */
-  overflow: hidden; /* はみ出しを防ぐ */
-  white-space: nowrap; /* 一行に収める */
-  text-overflow: ellipsis; /* 長すぎる場合は省略記号 */
-}
-
-.maps-button:hover {
-  background: #0056b3;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-  text-decoration: none;
-  color: white;
-}
-
-.retry-button {
-  background: #6f42c1;
-  color: white;
-  flex: 1;
-  min-width: 0;
-  box-sizing: border-box; /* ボーダーボックスを明示的に指定 */
-  max-width: 100%; /* 最大幅を制限 */
-  overflow: hidden; /* はみ出しを防ぐ */
-}
-
-/* アニメーション */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
   .app {
@@ -387,41 +145,9 @@ button:disabled {
     font-size: 1rem;
   }
 
-  .setting-group {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .setting-group label {
-    min-width: auto;
-  }
-
-  .setting-group select {
-    width: 100%;
-  }
-
   .search-button {
     padding: 15px 30px;
     font-size: 18px;
-  }
-
-  .restaurant-card {
-    padding: 20px;
-  }
-
-  .restaurant-card h3 {
-    font-size: 1.5rem;
-  }
-
-  .actions {
-    flex-direction: column;
-  }
-
-  .maps-button,
-  .retry-button {
-    min-width: auto;
-    width: 100%;
   }
 }
 
@@ -436,52 +162,5 @@ button:disabled {
 
   .app-header h1 {
     font-size: 1.8rem;
-  }
-
-  .settings {
-    padding: 20px;
-  }
-
-  .restaurant-card {
-    padding: 15px;
-  }
-
-  /* 小さい画面でのボタン調整 */
-  .actions {
-    gap: 10px; /* ギャップを小さくする */
-  }
-
-  .maps-button {
-    padding: 10px 12px; /* さらにパディングを減らす */
-    font-size: 14px; /* フォントサイズを小さくする */
-  }
-
-  .retry-button {
-    padding: 10px 12px;
-    font-size: 14px;
-  }
-}
-
-/* 非常に小さい画面（320px以下）への対応 */
-@media (max-width: 320px) {
-  .restaurant-card {
-    padding: 10px;
-    margin: 0 5px;
-  }
-
-  .actions {
-    gap: 8px;
-  }
-
-  .maps-button,
-  .retry-button {
-    padding: 8px 10px;
-    font-size: 13px;
-    border-radius: 6px;
-  }
-
-  .maps-button {
-    /* 絵文字とテキストを短縮 */
-    font-size: 12px;
   }
 }

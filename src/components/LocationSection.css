@@ -1,0 +1,28 @@
+/* 現在地取得セクション */
+.location-section {
+  text-align: center;
+}
+
+.location-button {
+  background: #28a745;
+  color: white;
+  padding: 15px 30px;
+  font-size: 18px;
+}
+
+.location-button:hover:not(:disabled) {
+  background: #218838;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(40, 167, 69, 0.3);
+}
+
+.location-info {
+  margin-top: 15px;
+  padding: 10px;
+  background: #d4edda;
+  border: 1px solid #c3e6cb;
+  border-radius: 6px;
+  color: #155724;
+  font-family: monospace;
+  display: inline-block;
+}

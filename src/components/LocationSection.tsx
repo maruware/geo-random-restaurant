@@ -1,4 +1,5 @@
 import type { Location } from "../types";
+import "./LocationSection.css";
 
 interface LocationSectionProps {
   location: Location | null;

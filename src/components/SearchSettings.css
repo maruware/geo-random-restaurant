@@ -1,0 +1,84 @@
+/* 設定セクション */
+.settings {
+  background: #f8f9fa;
+  padding: 25px;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+}
+
+.settings h2 {
+  margin: 0 0 20px 0;
+  color: #495057;
+  font-size: 1.3rem;
+}
+
+.setting-group {
+  display: flex;
+  align-items: center;
+  margin-bottom: 15px;
+  gap: 15px;
+}
+
+.setting-group:last-child {
+  margin-bottom: 0;
+}
+
+.setting-group label {
+  min-width: 100px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.setting-group select {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  background: white;
+  color: #212529;
+  font-size: 14px;
+  transition: border-color 0.2s;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=utf-8,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 8px center;
+  background-repeat: no-repeat;
+  background-size: 16px;
+  padding-right: 32px;
+}
+
+.setting-group select:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.setting-group select option {
+  background: white;
+  color: #212529;
+  padding: 8px;
+}
+
+/* レスポンシブ対応 */
+@media (max-width: 768px) {
+  .setting-group {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .setting-group label {
+    min-width: auto;
+  }
+
+  .setting-group select {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .settings {
+    padding: 20px;
+  }
+}
