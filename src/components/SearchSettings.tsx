@@ -26,6 +26,7 @@ export const SearchSettingsComponent = ({
           onChange={(e) => onRadiusChange(Number(e.target.value))}
         >
           <option value={500}>500m</option>
+          <option value={750}>750m</option>
           <option value={1000}>1km</option>
           <option value={2000}>2km</option>
           <option value={5000}>5km</option>
