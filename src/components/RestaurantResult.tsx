@@ -1,16 +1,22 @@
 import { useEffect, useRef } from "react";
-import type { Restaurant } from "../types";
+import type { Restaurant, Location } from "../types";
 import { StarRating } from "./StarRating";
-import { getGoogleMapsUrl } from "../utils/googleMaps";
+import {
+  getGoogleMapsUrl,
+  calculateDistance,
+  formatDistance,
+} from "../utils/googleMaps";
 import "./RestaurantResult.css";
 
 interface RestaurantResultProps {
   restaurant: Restaurant;
+  currentLocation: Location | null; // 現在地を追加
   onRetry: () => void;
 }
 
 export const RestaurantResult = ({
   restaurant,
+  currentLocation,
   onRetry,
 }: RestaurantResultProps) => {
   const resultRef = useRef<HTMLElement>(null);
@@ -23,7 +29,23 @@ export const RestaurantResult = ({
         block: "start",
       });
     }
-  }, [restaurant.place_id]); // place_idが変更されたときにスクロール
+  }, [restaurant.place_id]);
+
+  // 距離を計算する関数
+  const getDistance = (): string | null => {
+    if (currentLocation && restaurant.lat && restaurant.lng) {
+      const distance = calculateDistance(
+        currentLocation.lat,
+        currentLocation.lng,
+        restaurant.lat,
+        restaurant.lng
+      );
+      return formatDistance(distance);
+    }
+    return null;
+  };
+
+  const distance = getDistance();
 
   return (
     <section className="restaurant-result" ref={resultRef}>
@@ -41,6 +63,8 @@ export const RestaurantResult = ({
         )}
 
         <p className="address">📍 {restaurant.vicinity}</p>
+
+        {distance && <p className="distance">🚶 現在地から {distance}</p>}
 
         {restaurant.opening_hours?.open_now !== undefined && (
           <p

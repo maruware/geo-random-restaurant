@@ -11,6 +11,8 @@ export interface Restaurant {
   name: string;
   rating?: number;
   vicinity: string;
+  lat?: number; // 緯度を追加
+  lng?: number; // 経度を追加
   opening_hours?: {
     open_now?: boolean;
   };

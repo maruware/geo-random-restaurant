@@ -87,6 +87,7 @@ function App() {
         {selectedRestaurant && (
           <RestaurantResult
             restaurant={selectedRestaurant}
+            currentLocation={location}
             onRetry={findRandomRestaurant}
           />
         )}

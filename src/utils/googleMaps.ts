@@ -52,7 +52,8 @@ export const searchNearbyRestaurants = async (
             "name",
             "rating",
             "vicinity",
-            "opening_hours", // opening_hoursに戻す
+            "geometry", // 位置情報を取得するために追加
+            "opening_hours",
             "photos",
           ],
         };
@@ -99,7 +100,9 @@ export const searchNearbyRestaurants = async (
                 name: selected.name!,
                 rating: selected.rating,
                 vicinity: selected.vicinity!,
-                opening_hours: selected.opening_hours, // opening_hoursに戻す
+                lat: selected.geometry?.location?.lat(), // 緯度を追加
+                lng: selected.geometry?.location?.lng(), // 経度を追加
+                opening_hours: selected.opening_hours,
                 photos: selected.photos,
               });
             } else {
@@ -168,4 +171,34 @@ export const getAddressFromCoordinates = async (
         );
       });
   });
+};
+
+// 2点間の距離を計算する関数（ハヴァーサイン公式）
+export const calculateDistance = (
+  lat1: number,
+  lng1: number,
+  lat2: number,
+  lng2: number
+): number => {
+  const R = 6371; // 地球の半径（km）
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLng = ((lng2 - lng1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLng / 2) *
+      Math.sin(dLng / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  const distance = R * c; // 距離（km）
+  return distance;
+};
+
+// 距離を適切な単位で表示する関数
+export const formatDistance = (distanceKm: number): string => {
+  if (distanceKm < 1) {
+    return `${Math.round(distanceKm * 1000)}m`;
+  } else {
+    return `${distanceKm.toFixed(1)}km`;
+  }
 };
