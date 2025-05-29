@@ -42,13 +42,13 @@ export const RestaurantResult = ({
 
         <p className="address">📍 {restaurant.vicinity}</p>
 
-        {restaurant.opening_hours?.isOpen !== undefined && (
+        {restaurant.opening_hours?.open_now !== undefined && (
           <p
             className={`status ${
-              restaurant.opening_hours.isOpen() ? "open" : "closed"
+              restaurant.opening_hours.open_now ? "open" : "closed"
             }`}
           >
-            {restaurant.opening_hours.isOpen() ? "🟢 営業中" : "🔴 営業時間外"}
+            {restaurant.opening_hours.open_now ? "🟢 営業中" : "🔴 営業時間外"}
           </p>
         )}
 

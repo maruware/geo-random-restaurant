@@ -76,7 +76,7 @@ export const searchNearbyRestaurants = async (
               if (openOnly) {
                 filteredRestaurants = filteredRestaurants.filter(
                   (place: google.maps.places.PlaceResult) => {
-                    return place.opening_hours?.isOpen();
+                    return place.opening_hours?.open_now === true;
                   }
                 );
               }
