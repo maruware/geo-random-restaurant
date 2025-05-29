@@ -2,6 +2,25 @@
 import { Loader } from "@googlemaps/js-api-loader";
 import type { Location, Restaurant } from "../types";
 
+// Google Maps APIの共通Loaderインスタンス
+let googleMapsLoader: Loader | null = null;
+
+const getGoogleMapsLoader = () => {
+  if (!googleMapsLoader) {
+    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
+    if (!apiKey) {
+      throw new Error("Google Maps API Keyが設定されていません");
+    }
+
+    googleMapsLoader = new Loader({
+      apiKey: apiKey,
+      version: "weekly",
+      libraries: ["places"], // 必要なライブラリをすべて含める
+    });
+  }
+  return googleMapsLoader;
+};
+
 export const getGoogleMapsUrl = (restaurant: Restaurant): string => {
   return `https://maps.google.com/?q=${encodeURIComponent(
     restaurant.name
@@ -15,21 +34,7 @@ export const searchNearbyRestaurants = async (
   openOnly: boolean = false // 営業中フィルタのパラメータを追加
 ): Promise<Restaurant> => {
   return new Promise((resolve, reject) => {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      reject(
-        new Error(
-          "Google Maps API Keyが設定されていません。環境変数VITE_GOOGLE_MAPS_API_KEYを設定してください。"
-        )
-      );
-      return;
-    }
-
-    const loader = new Loader({
-      apiKey: apiKey,
-      version: "weekly",
-      libraries: ["places"],
-    });
+    const loader = getGoogleMapsLoader(); // 共通のLoaderを使用
 
     loader
       .load()
@@ -116,17 +121,7 @@ export const getAddressFromCoordinates = async (
   location: Location
 ): Promise<string> => {
   return new Promise((resolve, reject) => {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      reject(new Error("Google Maps API Keyが設定されていません"));
-      return;
-    }
-
-    const loader = new Loader({
-      apiKey: apiKey,
-      version: "weekly",
-      libraries: [], // geocodingライブラリは不要（デフォルトで含まれる）
-    });
+    const loader = getGoogleMapsLoader(); // 共通のLoaderを使用
 
     loader
       .load()
@@ -140,6 +135,9 @@ export const getAddressFromCoordinates = async (
             region: "JP", // 日本地域を指定
           },
           (results, status) => {
+            console.log("Geocoding status:", status);
+            console.log("Geocoding results:", results);
+
             if (status === "OK" && results && results[0]) {
               const result = results[0];
 
@@ -155,6 +153,7 @@ export const getAddressFromCoordinates = async (
                   .trim();
               }
 
+              console.log("Formatted address:", address);
               resolve(address || "住所の取得に失敗しました");
             } else {
               console.error("Geocoding failed:", status);
