@@ -24,7 +24,9 @@ export const LocationSection = ({
 
       {location && (
         <p className="location-info">
-          📍 現在地: {location.lat.toFixed(4)}, {location.lng.toFixed(4)}
+          📍 現在地:{" "}
+          {location.address ||
+            `${location.lat.toFixed(4)}, ${location.lng.toFixed(4)}`}
         </p>
       )}
     </section>

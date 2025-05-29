@@ -33,8 +33,8 @@ export const useGeolocation = () => {
           } as Location);
         } catch (addressError) {
           // 住所取得に失敗しても、緯度経度は設定
+          console.error("住所の取得に失敗しました:", addressError);
           setLocation(coordinates as Location);
-          console.warn("住所の取得に失敗しました:", addressError);
         }
 
         setIsLoading(false);

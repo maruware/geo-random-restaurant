@@ -125,7 +125,7 @@ export const getAddressFromCoordinates = async (
     const loader = new Loader({
       apiKey: apiKey,
       version: "weekly",
-      libraries: ["geocoding"],
+      libraries: [], // geocodingライブラリは不要（デフォルトで含まれる）
     });
 
     loader
@@ -136,65 +136,37 @@ export const getAddressFromCoordinates = async (
         geocoder.geocode(
           {
             location: { lat: location.lat, lng: location.lng },
+            language: "ja", // 日本語で住所を取得
+            region: "JP", // 日本地域を指定
           },
           (results, status) => {
             if (status === "OK" && results && results[0]) {
-              // 詳細な住所から適切な部分を抽出
               const result = results[0];
-              const addressComponents = result.address_components;
 
-              // 日本の住所形式に合わせて組み立て
-              const prefecture =
-                addressComponents.find((comp) =>
-                  comp.types.includes("administrative_area_level_1")
-                )?.long_name || "";
+              // formatted_addressをそのまま使用（日本語住所）
+              let address = result.formatted_address;
 
-              const city =
-                addressComponents.find(
-                  (comp) =>
-                    comp.types.includes("locality") ||
-                    comp.types.includes("administrative_area_level_2")
-                )?.long_name || "";
-
-              const ward =
-                addressComponents.find((comp) =>
-                  comp.types.includes("sublocality_level_1")
-                )?.long_name || "";
-
-              const district =
-                addressComponents.find(
-                  (comp) =>
-                    comp.types.includes("sublocality_level_2") ||
-                    comp.types.includes("sublocality_level_3")
-                )?.long_name || "";
-
-              // 住所を組み立て（都道府県+市区町村+町丁目）
-              let address = "";
-              if (prefecture) address += prefecture;
-              if (city) address += city;
-              if (ward) address += ward;
-              if (district) address += district;
-
-              // より詳細な住所が取得できない場合は、formatted_addressから抽出
-              if (!address && result.formatted_address) {
-                // 日本の住所から郵便番号を除去して、町丁目レベルまでを取得
-                const formattedAddress = result.formatted_address
+              // 日本の住所から不要な部分を除去
+              if (address) {
+                address = address
                   .replace(/〒\d{3}-\d{4}\s*/, "") // 郵便番号を除去
-                  .replace(/日本、/, "") // "日本、"を除去
+                  .replace(/^日本、/, "") // 先頭の"日本、"を除去
+                  .replace(/Japan,?\s*/, "") // "Japan"を除去
                   .trim();
-                address = formattedAddress;
               }
 
               resolve(address || "住所の取得に失敗しました");
             } else {
-              reject(new Error("住所の取得に失敗しました"));
+              console.error("Geocoding failed:", status);
+              reject(new Error(`住所の取得に失敗しました: ${status}`));
             }
           }
         );
       })
       .catch((error) => {
+        console.error("Google Maps API load error:", error);
         reject(
-          new Error("Geocoding APIの読み込みに失敗しました: " + error.message)
+          new Error("Google Maps APIの読み込みに失敗しました: " + error.message)
         );
       });
   });
