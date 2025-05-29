@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import type { Location } from "../types";
+import { getAddressFromCoordinates } from "../utils/googleMaps";
 
 export const useGeolocation = () => {
   const [location, setLocation] = useState<Location | null>(null);
@@ -17,11 +18,25 @@ export const useGeolocation = () => {
     }
 
     navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setLocation({
+      async (position) => {
+        const coordinates = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
-        });
+        };
+
+        try {
+          // 住所を取得
+          const address = await getAddressFromCoordinates(coordinates);
+          setLocation({
+            ...coordinates,
+            address,
+          } as Location);
+        } catch (addressError) {
+          // 住所取得に失敗しても、緯度経度は設定
+          setLocation(coordinates as Location);
+          console.warn("住所の取得に失敗しました:", addressError);
+        }
+
         setIsLoading(false);
       },
       (error) => {
