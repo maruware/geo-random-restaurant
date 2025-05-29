@@ -76,8 +76,7 @@ export const searchNearbyRestaurants = async (
               if (openOnly) {
                 filteredRestaurants = filteredRestaurants.filter(
                   (place: google.maps.places.PlaceResult) => {
-                    // opening_hoursのopen_nowを使用（元に戻す）
-                    return place.opening_hours?.open_now === true;
+                    return place.opening_hours?.isOpen();
                   }
                 );
               }

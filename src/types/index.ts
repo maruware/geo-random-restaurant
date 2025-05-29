@@ -12,7 +12,7 @@ export interface Restaurant {
   rating?: number;
   vicinity: string;
   opening_hours?: {
-    open_now?: boolean;
+    isOpen(date?: Date): boolean | undefined;
   };
   photos?: google.maps.places.PlacePhoto[];
 }
