@@ -19,4 +19,5 @@ export interface Restaurant {
 export interface SearchSettings {
   radius: number;
   minRating: number;
+  openOnly: boolean; // 営業中のみを検索するかどうか
 }

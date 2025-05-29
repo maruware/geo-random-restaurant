@@ -5,12 +5,14 @@ interface SearchSettingsProps {
   settings: SearchSettings;
   onRadiusChange: (radius: number) => void;
   onMinRatingChange: (minRating: number) => void;
+  onOpenOnlyChange: (openOnly: boolean) => void; // 新しいプロパティ追加
 }
 
 export const SearchSettingsComponent = ({
   settings,
   onRadiusChange,
   onMinRatingChange,
+  onOpenOnlyChange, // 新しいプロパティ追加
 }: SearchSettingsProps) => {
   return (
     <section className="settings">
@@ -43,6 +45,18 @@ export const SearchSettingsComponent = ({
           <option value={3.5}>★★★★☆ (3.5以上)</option>
           <option value={4}>★★★★☆ (4.0以上)</option>
           <option value={4.5}>★★★★★ (4.5以上)</option>
+        </select>
+      </div>
+
+      <div className="setting-group">
+        <label htmlFor="openOnly">営業状況:</label>
+        <select
+          id="openOnly"
+          value={settings.openOnly ? "true" : "false"}
+          onChange={(e) => onOpenOnlyChange(e.target.value === "true")}
+        >
+          <option value="false">すべて表示</option>
+          <option value="true">🟢 営業中のみ</option>
         </select>
       </div>
     </section>

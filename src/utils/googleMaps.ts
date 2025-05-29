@@ -11,7 +11,8 @@ export const getGoogleMapsUrl = (restaurant: Restaurant): string => {
 export const searchNearbyRestaurants = async (
   location: Location,
   radius: number,
-  minRating: number
+  minRating: number,
+  openOnly: boolean = false // 営業中フィルタのパラメータを追加
 ): Promise<Restaurant> => {
   return new Promise((resolve, reject) => {
     const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
@@ -46,7 +47,7 @@ export const searchNearbyRestaurants = async (
             "name",
             "rating",
             "vicinity",
-            "opening_hours",
+            "opening_hours", // opening_hoursに戻す
             "photos",
           ],
         };
@@ -61,17 +62,26 @@ export const searchNearbyRestaurants = async (
               status === google.maps.places.PlacesServiceStatus.OK &&
               results
             ) {
-              const filteredRestaurants = results.filter(
+              let filteredRestaurants = results.filter(
                 (place: google.maps.places.PlaceResult) =>
                   place.rating && place.rating >= minRating
               );
 
-              if (filteredRestaurants.length === 0) {
-                reject(
-                  new Error(
-                    `半径${radius}m以内に評価${minRating}以上のレストランが見つかりませんでした`
-                  )
+              // 営業中フィルタが有効な場合、営業中のレストランのみを抽出
+              if (openOnly) {
+                filteredRestaurants = filteredRestaurants.filter(
+                  (place: google.maps.places.PlaceResult) => {
+                    // opening_hoursのopen_nowを使用（元に戻す）
+                    return place.opening_hours?.open_now === true;
+                  }
                 );
+              }
+
+              if (filteredRestaurants.length === 0) {
+                const filterMessage = openOnly
+                  ? `半径${radius}m以内に評価${minRating}以上かつ営業中のレストランが見つかりませんでした`
+                  : `半径${radius}m以内に評価${minRating}以上のレストランが見つかりませんでした`;
+                reject(new Error(filterMessage));
                 return;
               }
 
@@ -85,7 +95,7 @@ export const searchNearbyRestaurants = async (
                 name: selected.name!,
                 rating: selected.rating,
                 vicinity: selected.vicinity!,
-                opening_hours: selected.opening_hours,
+                opening_hours: selected.opening_hours, // opening_hoursに戻す
                 photos: selected.photos,
               });
             } else {

@@ -17,6 +17,7 @@ function App() {
   } = useGeolocation();
   const [searchRadius, setSearchRadius] = useState(1000);
   const [minRating, setMinRating] = useState(3.5);
+  const [openOnly, setOpenOnly] = useState(false); // 営業中フィルタの状態追加
   const [selectedRestaurant, setSelectedRestaurant] =
     useState<Restaurant | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -36,7 +37,8 @@ function App() {
       const restaurant = await searchNearbyRestaurants(
         location,
         searchRadius,
-        minRating
+        minRating,
+        openOnly
       );
       setSelectedRestaurant(restaurant);
     } catch (error) {
@@ -44,7 +46,7 @@ function App() {
     } finally {
       setIsSearching(false);
     }
-  }, [location, searchRadius, minRating]);
+  }, [location, searchRadius, minRating, openOnly]);
 
   const isLoading = locationLoading || isSearching;
   const error = locationError || searchError;
@@ -58,9 +60,10 @@ function App() {
 
       <main className="app-main">
         <SearchSettingsComponent
-          settings={{ radius: searchRadius, minRating }}
+          settings={{ radius: searchRadius, minRating, openOnly }}
           onRadiusChange={setSearchRadius}
           onMinRatingChange={setMinRating}
+          onOpenOnlyChange={setOpenOnly}
         />
 
         <LocationSection
