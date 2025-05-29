@@ -1,3 +1,4 @@
+import { useEffect, useRef } from "react";
 import type { Restaurant } from "../types";
 import { StarRating } from "./StarRating";
 import { getGoogleMapsUrl } from "../utils/googleMaps";
@@ -12,8 +13,20 @@ export const RestaurantResult = ({
   restaurant,
   onRetry,
 }: RestaurantResultProps) => {
+  const resultRef = useRef<HTMLElement>(null);
+
+  // レストランが変更されたときに自動スクロール
+  useEffect(() => {
+    if (resultRef.current) {
+      resultRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    }
+  }, [restaurant.place_id]); // place_idが変更されたときにスクロール
+
   return (
-    <section className="restaurant-result">
+    <section className="restaurant-result" ref={resultRef}>
       <h2>🎯 今日のおすすめレストラン</h2>
       <div className="restaurant-card">
         <h3>{restaurant.name}</h3>
