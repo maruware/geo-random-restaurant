@@ -22,9 +22,15 @@ const getGoogleMapsLoader = () => {
 };
 
 export const getGoogleMapsUrl = (restaurant: Restaurant): string => {
-  return `https://maps.google.com/?q=${encodeURIComponent(
+  // 緯度経度が利用可能な場合は具体的な位置を使用
+  if (restaurant.lat && restaurant.lng) {
+    return `https://www.google.com/maps/search/?api=1&query=${restaurant.lat},${restaurant.lng}&query_place_id=${restaurant.place_id}`;
+  }
+
+  // フォールバック: 緯度経度が利用できない場合は名前を使用
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
     restaurant.name
-  )}&place_id=${restaurant.place_id}`;
+  )}&query_place_id=${restaurant.place_id}`;
 };
 
 export const searchNearbyRestaurants = async (
