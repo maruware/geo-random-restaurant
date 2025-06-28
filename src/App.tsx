@@ -4,7 +4,7 @@ import "./App.css";
 import type { Restaurant } from "./types";
 import { useGeolocation } from "./hooks/useGeolocation";
 import {
-  searchNearbyRestaurants,
+  searchNearbyRestaurantsWithProbability,
   calculateWalkingDistance,
 } from "./utils/googleMaps";
 import { SearchSettingsComponent } from "./components/SearchSettings";
@@ -25,6 +25,9 @@ function App() {
     useState<Restaurant | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
+  const [restaurantHistory, setRestaurantHistory] = useState<
+    Map<string, number>
+  >(new Map()); // レストラン選択履歴
 
   const findRandomRestaurant = useCallback(async () => {
     if (!location) {
@@ -37,11 +40,12 @@ function App() {
     setSelectedRestaurant(null);
 
     try {
-      const restaurant = await searchNearbyRestaurants(
+      const restaurant = await searchNearbyRestaurantsWithProbability(
         location,
         searchRadius,
         minRating,
-        openOnly
+        openOnly,
+        restaurantHistory // 履歴を渡す
       );
 
       // レストランの緯度経度が取得できている場合、徒歩経路距離を計算
@@ -59,13 +63,21 @@ function App() {
         }
       }
 
+      // 選択されたレストランを履歴に追加
+      setRestaurantHistory((prev) => {
+        const newHistory = new Map(prev);
+        const currentCount = newHistory.get(restaurant.place_id) || 0;
+        newHistory.set(restaurant.place_id, currentCount + 1);
+        return newHistory;
+      });
+
       setSelectedRestaurant(restaurant);
     } catch (error) {
       setSearchError((error as Error).message);
     } finally {
       setIsSearching(false);
     }
-  }, [location, searchRadius, minRating, openOnly]);
+  }, [location, searchRadius, minRating, openOnly, restaurantHistory]);
 
   const isLoading = locationLoading || isSearching;
   const error = locationError || searchError;

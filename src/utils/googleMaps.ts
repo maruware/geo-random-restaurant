@@ -266,3 +266,129 @@ export const calculateWalkingDistance = async (
       });
   });
 };
+
+// 確率調整機能付きのレストラン検索
+export const searchNearbyRestaurantsWithProbability = async (
+  location: Location,
+  radius: number,
+  minRating: number,
+  openOnly: boolean = false,
+  restaurantHistory: Map<string, number> = new Map()
+): Promise<Restaurant> => {
+  return new Promise((resolve, reject) => {
+    const loader = getGoogleMapsLoader();
+
+    loader
+      .load()
+      .then((google) => {
+        const service = new google.maps.places.PlacesService(
+          document.createElement("div")
+        );
+
+        const request = {
+          location: new google.maps.LatLng(location.lat, location.lng),
+          radius: radius,
+          type: "restaurant",
+          fields: [
+            "place_id",
+            "name",
+            "rating",
+            "vicinity",
+            "geometry",
+            "opening_hours",
+            "photos",
+          ],
+        };
+
+        service.nearbySearch(
+          request,
+          (
+            results: google.maps.places.PlaceResult[] | null,
+            status: google.maps.places.PlacesServiceStatus
+          ) => {
+            if (
+              status === google.maps.places.PlacesServiceStatus.OK &&
+              results
+            ) {
+              let filteredRestaurants = results.filter(
+                (place: google.maps.places.PlaceResult) =>
+                  place.rating && place.rating >= minRating
+              );
+
+              if (openOnly) {
+                filteredRestaurants = filteredRestaurants.filter(
+                  (place: google.maps.places.PlaceResult) => {
+                    return place.opening_hours?.open_now === true;
+                  }
+                );
+              }
+
+              if (filteredRestaurants.length === 0) {
+                const filterMessage = openOnly
+                  ? `半径${radius}m以内に評価${minRating}以上かつ営業中のレストランが見つかりませんでした`
+                  : `半径${radius}m以内に評価${minRating}以上のレストランが見つかりませんでした`;
+                reject(new Error(filterMessage));
+                return;
+              }
+
+              // 確率調整を適用してレストランを選択
+              const selected = selectRestaurantWithProbability(
+                filteredRestaurants,
+                restaurantHistory
+              );
+
+              resolve({
+                place_id: selected.place_id!,
+                name: selected.name!,
+                rating: selected.rating,
+                vicinity: selected.vicinity!,
+                lat: selected.geometry?.location?.lat(),
+                lng: selected.geometry?.location?.lng(),
+                opening_hours: selected.opening_hours,
+                photos: selected.photos,
+              });
+            } else {
+              reject(new Error("レストランの検索に失敗しました"));
+            }
+          }
+        );
+      })
+      .catch((error) => {
+        reject(
+          new Error("Google Maps APIの読み込みに失敗しました: " + error.message)
+        );
+      });
+  });
+};
+
+// 履歴に基づいて確率調整したレストラン選択
+const selectRestaurantWithProbability = (
+  restaurants: google.maps.places.PlaceResult[],
+  history: Map<string, number>
+): google.maps.places.PlaceResult => {
+  // 各レストランの重みを計算
+  const weights = restaurants.map((restaurant) => {
+    const placeId = restaurant.place_id!;
+    const selectionCount = history.get(placeId) || 0;
+    // 選択回数に応じて重みを計算（25%ずつ減少）
+    const weight = Math.pow(0.25, selectionCount);
+    return { restaurant, weight };
+  });
+
+  // 重み付き合計を計算
+  const totalWeight = weights.reduce((sum, item) => sum + item.weight, 0);
+
+  // ランダムな値を生成
+  let random = Math.random() * totalWeight;
+
+  // 重みに基づいて選択
+  for (const item of weights) {
+    random -= item.weight;
+    if (random <= 0) {
+      return item.restaurant;
+    }
+  }
+
+  // フォールバック（通常は到達しない）
+  return restaurants[Math.floor(Math.random() * restaurants.length)];
+};
