@@ -63,6 +63,7 @@ export const searchNearbyRestaurants = async (
     location: new LatLng(location.lat, location.lng),
     radius: radius,
     type: "restaurant",
+    openNow: openOnly, // API側で営業中フィルタを適用
     fields: [
       "place_id",
       "name",
@@ -82,19 +83,11 @@ export const searchNearbyRestaurants = async (
         status: google.maps.places.PlacesServiceStatus
       ) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-          let filteredRestaurants = results.filter(
+          // 評価フィルタのみをJavaScript側で適用
+          const filteredRestaurants = results.filter(
             (place: google.maps.places.PlaceResult) =>
               place.rating && place.rating >= minRating
           );
-
-          // 営業中フィルタが有効な場合、営業中のレストランのみを抽出
-          if (openOnly) {
-            filteredRestaurants = filteredRestaurants.filter(
-              (place: google.maps.places.PlaceResult) => {
-                return place.opening_hours?.open_now === true;
-              }
-            );
-          }
 
           if (filteredRestaurants.length === 0) {
             const filterMessage = openOnly
@@ -270,6 +263,7 @@ export const searchNearbyRestaurantsWithProbability = async (
     location: new LatLng(location.lat, location.lng),
     radius: radius,
     type: "restaurant",
+    openNow: openOnly, // API側で営業中フィルタを適用
     fields: [
       "place_id",
       "name",
@@ -289,18 +283,11 @@ export const searchNearbyRestaurantsWithProbability = async (
         status: google.maps.places.PlacesServiceStatus
       ) => {
         if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-          let filteredRestaurants = results.filter(
+          // 評価フィルタのみをJavaScript側で適用
+          const filteredRestaurants = results.filter(
             (place: google.maps.places.PlaceResult) =>
               place.rating && place.rating >= minRating
           );
-
-          if (openOnly) {
-            filteredRestaurants = filteredRestaurants.filter(
-              (place: google.maps.places.PlaceResult) => {
-                return place.opening_hours?.open_now === true;
-              }
-            );
-          }
 
           if (filteredRestaurants.length === 0) {
             const filterMessage = openOnly
