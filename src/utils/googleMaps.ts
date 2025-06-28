@@ -15,7 +15,7 @@ const getGoogleMapsLoader = () => {
     googleMapsLoader = new Loader({
       apiKey: apiKey,
       version: "weekly",
-      libraries: ["places", "routes"], // routesライブラリを追加
+      // importLibrary使用時はlibrariesプロパティは不要
     });
   }
   return googleMapsLoader;
@@ -52,14 +52,15 @@ export const searchNearbyRestaurants = async (
   openOnly: boolean = false // 営業中フィルタのパラメータを追加
 ): Promise<Restaurant> => {
   const loader = getGoogleMapsLoader();
-  const google = await loader.load();
+  const [{ PlacesService }, { LatLng }] = await Promise.all([
+    loader.importLibrary("places"),
+    loader.importLibrary("core"),
+  ]);
 
-  const service = new google.maps.places.PlacesService(
-    document.createElement("div")
-  );
+  const service = new PlacesService(document.createElement("div"));
 
   const request = {
-    location: new google.maps.LatLng(location.lat, location.lng),
+    location: new LatLng(location.lat, location.lng),
     radius: radius,
     type: "restaurant",
     fields: [
@@ -130,9 +131,9 @@ export const getAddressFromCoordinates = async (
   location: Location
 ): Promise<string> => {
   const loader = getGoogleMapsLoader();
-  const google = await loader.load();
+  const { Geocoder } = await loader.importLibrary("geocoding");
 
-  const geocoder = new google.maps.Geocoder();
+  const geocoder = new Geocoder();
 
   try {
     const response = await geocoder.geocode({
@@ -202,16 +203,18 @@ export const calculateWalkingDistance = async (
   destination: { lat: number; lng: number }
 ): Promise<{ distance: string; duration: string }> => {
   const loader = getGoogleMapsLoader();
-  const google = await loader.load();
+  const [{ DirectionsService, TravelMode }, { UnitSystem }] = await Promise.all(
+    [loader.importLibrary("routes"), loader.importLibrary("core")]
+  );
 
-  const directionsService = new google.maps.DirectionsService();
+  const directionsService = new DirectionsService();
 
   try {
     const response = await directionsService.route({
       origin: { lat: origin.lat, lng: origin.lng },
       destination: { lat: destination.lat, lng: destination.lng },
-      travelMode: google.maps.TravelMode.WALKING,
-      unitSystem: google.maps.UnitSystem.METRIC,
+      travelMode: TravelMode.WALKING,
+      unitSystem: UnitSystem.METRIC,
       language: "ja",
       region: "JP",
     });
@@ -256,14 +259,15 @@ export const searchNearbyRestaurantsWithProbability = async (
   restaurantHistory: Map<string, number> = new Map()
 ): Promise<Restaurant> => {
   const loader = getGoogleMapsLoader();
-  const google = await loader.load();
+  const [{ PlacesService }, { LatLng }] = await Promise.all([
+    loader.importLibrary("places"),
+    loader.importLibrary("core"),
+  ]);
 
-  const service = new google.maps.places.PlacesService(
-    document.createElement("div")
-  );
+  const service = new PlacesService(document.createElement("div"));
 
   const request = {
-    location: new google.maps.LatLng(location.lat, location.lng),
+    location: new LatLng(location.lat, location.lng),
     radius: radius,
     type: "restaurant",
     fields: [
