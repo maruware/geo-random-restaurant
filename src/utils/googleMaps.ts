@@ -33,150 +33,137 @@ export const getGoogleMapsUrl = (restaurant: Restaurant): string => {
   )}&query_place_id=${restaurant.place_id}`;
 };
 
+// コールバックベースのAPIをPromise化するヘルパー関数（PlacesService用）
+const promisifyPlacesCallback = <T>(
+  callback: (
+    resolve: (value: T) => void,
+    reject: (error: Error) => void
+  ) => void
+): Promise<T> => {
+  return new Promise<T>((resolve, reject) => {
+    callback(resolve, reject);
+  });
+};
+
 export const searchNearbyRestaurants = async (
   location: Location,
   radius: number,
   minRating: number,
   openOnly: boolean = false // 営業中フィルタのパラメータを追加
 ): Promise<Restaurant> => {
-  return new Promise((resolve, reject) => {
-    const loader = getGoogleMapsLoader(); // 共通のLoaderを使用
+  const loader = getGoogleMapsLoader();
+  const google = await loader.load();
 
-    loader
-      .load()
-      .then((google) => {
-        const service = new google.maps.places.PlacesService(
-          document.createElement("div")
-        );
+  const service = new google.maps.places.PlacesService(
+    document.createElement("div")
+  );
 
-        const request = {
-          location: new google.maps.LatLng(location.lat, location.lng),
-          radius: radius,
-          type: "restaurant",
-          fields: [
-            "place_id",
-            "name",
-            "rating",
-            "vicinity",
-            "geometry", // 位置情報を取得するために追加
-            "opening_hours",
-            "photos",
-          ],
-        };
+  const request = {
+    location: new google.maps.LatLng(location.lat, location.lng),
+    radius: radius,
+    type: "restaurant",
+    fields: [
+      "place_id",
+      "name",
+      "rating",
+      "vicinity",
+      "geometry", // 位置情報を取得するために追加
+      "opening_hours",
+      "photos",
+    ],
+  };
 
-        service.nearbySearch(
-          request,
-          (
-            results: google.maps.places.PlaceResult[] | null,
-            status: google.maps.places.PlacesServiceStatus
-          ) => {
-            if (
-              status === google.maps.places.PlacesServiceStatus.OK &&
-              results
-            ) {
-              let filteredRestaurants = results.filter(
-                (place: google.maps.places.PlaceResult) =>
-                  place.rating && place.rating >= minRating
-              );
+  return promisifyPlacesCallback<Restaurant>((resolve, reject) => {
+    service.nearbySearch(
+      request,
+      (
+        results: google.maps.places.PlaceResult[] | null,
+        status: google.maps.places.PlacesServiceStatus
+      ) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+          let filteredRestaurants = results.filter(
+            (place: google.maps.places.PlaceResult) =>
+              place.rating && place.rating >= minRating
+          );
 
-              // 営業中フィルタが有効な場合、営業中のレストランのみを抽出
-              if (openOnly) {
-                filteredRestaurants = filteredRestaurants.filter(
-                  (place: google.maps.places.PlaceResult) => {
-                    return place.opening_hours?.open_now === true;
-                  }
-                );
+          // 営業中フィルタが有効な場合、営業中のレストランのみを抽出
+          if (openOnly) {
+            filteredRestaurants = filteredRestaurants.filter(
+              (place: google.maps.places.PlaceResult) => {
+                return place.opening_hours?.open_now === true;
               }
-
-              if (filteredRestaurants.length === 0) {
-                const filterMessage = openOnly
-                  ? `半径${radius}m以内に評価${minRating}以上かつ営業中のレストランが見つかりませんでした`
-                  : `半径${radius}m以内に評価${minRating}以上のレストランが見つかりませんでした`;
-                reject(new Error(filterMessage));
-                return;
-              }
-
-              const randomIndex = Math.floor(
-                Math.random() * filteredRestaurants.length
-              );
-              const selected = filteredRestaurants[randomIndex];
-
-              resolve({
-                place_id: selected.place_id!,
-                name: selected.name!,
-                rating: selected.rating,
-                vicinity: selected.vicinity!,
-                lat: selected.geometry?.location?.lat(), // 緯度を追加
-                lng: selected.geometry?.location?.lng(), // 経度を追加
-                opening_hours: selected.opening_hours,
-                photos: selected.photos,
-              });
-            } else {
-              reject(new Error("レストランの検索に失敗しました"));
-            }
+            );
           }
-        );
-      })
-      .catch((error) => {
-        reject(
-          new Error("Google Maps APIの読み込みに失敗しました: " + error.message)
-        );
-      });
+
+          if (filteredRestaurants.length === 0) {
+            const filterMessage = openOnly
+              ? `半径${radius}m以内に評価${minRating}以上かつ営業中のレストランが見つかりませんでした`
+              : `半径${radius}m以内に評価${minRating}以上のレストランが見つかりませんでした`;
+            reject(new Error(filterMessage));
+            return;
+          }
+
+          const randomIndex = Math.floor(
+            Math.random() * filteredRestaurants.length
+          );
+          const selected = filteredRestaurants[randomIndex];
+
+          resolve({
+            place_id: selected.place_id!,
+            name: selected.name!,
+            rating: selected.rating,
+            vicinity: selected.vicinity!,
+            lat: selected.geometry?.location?.lat(), // 緯度を追加
+            lng: selected.geometry?.location?.lng(), // 経度を追加
+            opening_hours: selected.opening_hours,
+            photos: selected.photos,
+          });
+        } else {
+          reject(new Error("レストランの検索に失敗しました"));
+        }
+      }
+    );
   });
 };
 
 export const getAddressFromCoordinates = async (
   location: Location
 ): Promise<string> => {
-  return new Promise((resolve, reject) => {
-    const loader = getGoogleMapsLoader(); // 共通のLoaderを使用
+  const loader = getGoogleMapsLoader();
+  const google = await loader.load();
 
-    loader
-      .load()
-      .then((google) => {
-        const geocoder = new google.maps.Geocoder();
+  const geocoder = new google.maps.Geocoder();
 
-        geocoder.geocode(
-          {
-            location: { lat: location.lat, lng: location.lng },
-            language: "ja", // 日本語で住所を取得
-            region: "JP", // 日本地域を指定
-          },
-          (results, status) => {
-            console.log("Geocoding status:", status);
-            console.log("Geocoding results:", results);
+  try {
+    const response = await geocoder.geocode({
+      location: { lat: location.lat, lng: location.lng },
+      language: "ja",
+      region: "JP",
+    });
 
-            if (status === "OK" && results && results[0]) {
-              const result = results[0];
+    console.log("Geocoding response:", response);
 
-              // formatted_addressをそのまま使用（日本語住所）
-              let address = result.formatted_address;
+    if (response.results && response.results[0]) {
+      const result = response.results[0];
+      let address = result.formatted_address;
 
-              // 日本の住所から不要な部分を除去
-              if (address) {
-                address = address
-                  .replace(/〒\d{3}-\d{4}\s*/, "") // 郵便番号を除去
-                  .replace(/^日本、/, "") // 先頭の"日本、"を除去
-                  .replace(/Japan,?\s*/, "") // "Japan"を除去
-                  .trim();
-              }
+      if (address) {
+        address = address
+          .replace(/〒\d{3}-\d{4}\s*/, "")
+          .replace(/^日本、/, "")
+          .replace(/Japan,?\s*/, "")
+          .trim();
+      }
 
-              console.log("Formatted address:", address);
-              resolve(address || "住所の取得に失敗しました");
-            } else {
-              console.error("Geocoding failed:", status);
-              reject(new Error(`住所の取得に失敗しました: ${status}`));
-            }
-          }
-        );
-      })
-      .catch((error) => {
-        console.error("Google Maps API load error:", error);
-        reject(
-          new Error("Google Maps APIの読み込みに失敗しました: " + error.message)
-        );
-      });
-  });
+      console.log("Formatted address:", address);
+      return address || "住所の取得に失敗しました";
+    } else {
+      throw new Error(`住所の取得に失敗しました`);
+    }
+  } catch (error) {
+    console.error("Geocoding error:", error);
+    throw new Error(`住所の取得に失敗しました: ${error}`);
+  }
 };
 
 // 2点間の距離を計算する関数（ハヴァーサイン公式）
@@ -214,57 +201,50 @@ export const calculateWalkingDistance = async (
   origin: Location,
   destination: { lat: number; lng: number }
 ): Promise<{ distance: string; duration: string }> => {
-  return new Promise((resolve, reject) => {
-    const loader = getGoogleMapsLoader();
+  const loader = getGoogleMapsLoader();
+  const google = await loader.load();
 
-    loader
-      .load()
-      .then((google) => {
-        const directionsService = new google.maps.DirectionsService();
+  const directionsService = new google.maps.DirectionsService();
 
-        directionsService.route(
-          {
-            origin: { lat: origin.lat, lng: origin.lng },
-            destination: { lat: destination.lat, lng: destination.lng },
-            travelMode: google.maps.TravelMode.WALKING,
-            unitSystem: google.maps.UnitSystem.METRIC,
-            language: "ja",
-            region: "JP",
-          },
-          (result, status) => {
-            if (status === google.maps.DirectionsStatus.OK && result) {
-              const route = result.routes[0];
-              const leg = route.legs[0];
+  try {
+    const response = await directionsService.route({
+      origin: { lat: origin.lat, lng: origin.lng },
+      destination: { lat: destination.lat, lng: destination.lng },
+      travelMode: google.maps.TravelMode.WALKING,
+      unitSystem: google.maps.UnitSystem.METRIC,
+      language: "ja",
+      region: "JP",
+    });
 
-              resolve({
-                distance: leg.distance?.text || "不明",
-                duration: leg.duration?.text || "不明",
-              });
-            } else {
-              // 徒歩経路が見つからない場合は直線距離にフォールバック
-              const directDistance = calculateDistance(
-                origin.lat,
-                origin.lng,
-                destination.lat,
-                destination.lng
-              );
-              const formattedDistance = formatDistance(directDistance);
-              const estimatedDuration = Math.round(
-                (directDistance * 1000) / 80
-              ); // 時速4.8km (80m/分) で概算
+    if (response.routes && response.routes[0]) {
+      const route = response.routes[0];
+      const leg = route.legs[0];
 
-              resolve({
-                distance: `約${formattedDistance}`,
-                duration: `約${estimatedDuration}分`,
-              });
-            }
-          }
-        );
-      })
-      .catch((error) => {
-        reject(new Error("徒歩経路の計算に失敗しました: " + error.message));
-      });
-  });
+      return {
+        distance: leg.distance?.text || "不明",
+        duration: leg.duration?.text || "不明",
+      };
+    } else {
+      // レスポンスが無効な場合はフォールバック
+      throw new Error("経路が見つかりません");
+    }
+  } catch (error) {
+    // 徒歩経路が見つからない場合は直線距離にフォールバック
+    console.warn("徒歩経路の計算に失敗、直線距離で概算:", error);
+    const directDistance = calculateDistance(
+      origin.lat,
+      origin.lng,
+      destination.lat,
+      destination.lng
+    );
+    const formattedDistance = formatDistance(directDistance);
+    const estimatedDuration = Math.round((directDistance * 1000) / 80); // 時速4.8km (80m/分) で概算
+
+    return {
+      distance: `約${formattedDistance}`,
+      duration: `約${estimatedDuration}分`,
+    };
+  }
 };
 
 // 確率調整機能付きのレストラン検索
@@ -275,89 +255,78 @@ export const searchNearbyRestaurantsWithProbability = async (
   openOnly: boolean = false,
   restaurantHistory: Map<string, number> = new Map()
 ): Promise<Restaurant> => {
-  return new Promise((resolve, reject) => {
-    const loader = getGoogleMapsLoader();
+  const loader = getGoogleMapsLoader();
+  const google = await loader.load();
 
-    loader
-      .load()
-      .then((google) => {
-        const service = new google.maps.places.PlacesService(
-          document.createElement("div")
-        );
+  const service = new google.maps.places.PlacesService(
+    document.createElement("div")
+  );
 
-        const request = {
-          location: new google.maps.LatLng(location.lat, location.lng),
-          radius: radius,
-          type: "restaurant",
-          fields: [
-            "place_id",
-            "name",
-            "rating",
-            "vicinity",
-            "geometry",
-            "opening_hours",
-            "photos",
-          ],
-        };
+  const request = {
+    location: new google.maps.LatLng(location.lat, location.lng),
+    radius: radius,
+    type: "restaurant",
+    fields: [
+      "place_id",
+      "name",
+      "rating",
+      "vicinity",
+      "geometry",
+      "opening_hours",
+      "photos",
+    ],
+  };
 
-        service.nearbySearch(
-          request,
-          (
-            results: google.maps.places.PlaceResult[] | null,
-            status: google.maps.places.PlacesServiceStatus
-          ) => {
-            if (
-              status === google.maps.places.PlacesServiceStatus.OK &&
-              results
-            ) {
-              let filteredRestaurants = results.filter(
-                (place: google.maps.places.PlaceResult) =>
-                  place.rating && place.rating >= minRating
-              );
+  return promisifyPlacesCallback<Restaurant>((resolve, reject) => {
+    service.nearbySearch(
+      request,
+      (
+        results: google.maps.places.PlaceResult[] | null,
+        status: google.maps.places.PlacesServiceStatus
+      ) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+          let filteredRestaurants = results.filter(
+            (place: google.maps.places.PlaceResult) =>
+              place.rating && place.rating >= minRating
+          );
 
-              if (openOnly) {
-                filteredRestaurants = filteredRestaurants.filter(
-                  (place: google.maps.places.PlaceResult) => {
-                    return place.opening_hours?.open_now === true;
-                  }
-                );
+          if (openOnly) {
+            filteredRestaurants = filteredRestaurants.filter(
+              (place: google.maps.places.PlaceResult) => {
+                return place.opening_hours?.open_now === true;
               }
-
-              if (filteredRestaurants.length === 0) {
-                const filterMessage = openOnly
-                  ? `半径${radius}m以内に評価${minRating}以上かつ営業中のレストランが見つかりませんでした`
-                  : `半径${radius}m以内に評価${minRating}以上のレストランが見つかりませんでした`;
-                reject(new Error(filterMessage));
-                return;
-              }
-
-              // 確率調整を適用してレストランを選択
-              const selected = selectRestaurantWithProbability(
-                filteredRestaurants,
-                restaurantHistory
-              );
-
-              resolve({
-                place_id: selected.place_id!,
-                name: selected.name!,
-                rating: selected.rating,
-                vicinity: selected.vicinity!,
-                lat: selected.geometry?.location?.lat(),
-                lng: selected.geometry?.location?.lng(),
-                opening_hours: selected.opening_hours,
-                photos: selected.photos,
-              });
-            } else {
-              reject(new Error("レストランの検索に失敗しました"));
-            }
+            );
           }
-        );
-      })
-      .catch((error) => {
-        reject(
-          new Error("Google Maps APIの読み込みに失敗しました: " + error.message)
-        );
-      });
+
+          if (filteredRestaurants.length === 0) {
+            const filterMessage = openOnly
+              ? `半径${radius}m以内に評価${minRating}以上かつ営業中のレストランが見つかりませんでした`
+              : `半径${radius}m以内に評価${minRating}以上のレストランが見つかりませんでした`;
+            reject(new Error(filterMessage));
+            return;
+          }
+
+          // 確率調整を適用してレストランを選択
+          const selected = selectRestaurantWithProbability(
+            filteredRestaurants,
+            restaurantHistory
+          );
+
+          resolve({
+            place_id: selected.place_id!,
+            name: selected.name!,
+            rating: selected.rating,
+            vicinity: selected.vicinity!,
+            lat: selected.geometry?.location?.lat(),
+            lng: selected.geometry?.location?.lng(),
+            opening_hours: selected.opening_hours,
+            photos: selected.photos,
+          });
+        } else {
+          reject(new Error("レストランの検索に失敗しました"));
+        }
+      }
+    );
   });
 };
 
