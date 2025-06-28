@@ -33,6 +33,12 @@ export const RestaurantResult = ({
 
   // 距離を計算する関数
   const getDistance = (): string | null => {
+    // 徒歩経路距離がある場合はそれを優先表示
+    if (restaurant.walkingDistance) {
+      return restaurant.walkingDistance;
+    }
+
+    // フォールバック: 直線距離を計算
     if (currentLocation && restaurant.lat && restaurant.lng) {
       const distance = calculateDistance(
         currentLocation.lat,
@@ -40,12 +46,13 @@ export const RestaurantResult = ({
         restaurant.lat,
         restaurant.lng
       );
-      return formatDistance(distance);
+      return `約${formatDistance(distance)} (直線距離)`;
     }
     return null;
   };
 
   const distance = getDistance();
+  const duration = restaurant.walkingDuration;
 
   return (
     <section className="restaurant-result" ref={resultRef}>
@@ -64,7 +71,12 @@ export const RestaurantResult = ({
 
         <p className="address">📍 {restaurant.vicinity}</p>
 
-        {distance && <p className="distance">🚶 現在地から {distance}</p>}
+        {distance && (
+          <p className="distance">
+            🚶 現在地から {distance}
+            {duration && <span> ({duration})</span>}
+          </p>
+        )}
 
         {restaurant.opening_hours?.open_now !== undefined && (
           <p

@@ -15,7 +15,7 @@ const getGoogleMapsLoader = () => {
     googleMapsLoader = new Loader({
       apiKey: apiKey,
       version: "weekly",
-      libraries: ["places"], // 必要なライブラリをすべて含める
+      libraries: ["places", "routes"], // routesライブラリを追加
     });
   }
   return googleMapsLoader;
@@ -207,4 +207,62 @@ export const formatDistance = (distanceKm: number): string => {
   } else {
     return `${distanceKm.toFixed(1)}km`;
   }
+};
+
+// 徒歩経路の距離と時間を計算する関数
+export const calculateWalkingDistance = async (
+  origin: Location,
+  destination: { lat: number; lng: number }
+): Promise<{ distance: string; duration: string }> => {
+  return new Promise((resolve, reject) => {
+    const loader = getGoogleMapsLoader();
+
+    loader
+      .load()
+      .then((google) => {
+        const directionsService = new google.maps.DirectionsService();
+
+        directionsService.route(
+          {
+            origin: { lat: origin.lat, lng: origin.lng },
+            destination: { lat: destination.lat, lng: destination.lng },
+            travelMode: google.maps.TravelMode.WALKING,
+            unitSystem: google.maps.UnitSystem.METRIC,
+            language: "ja",
+            region: "JP",
+          },
+          (result, status) => {
+            if (status === google.maps.DirectionsStatus.OK && result) {
+              const route = result.routes[0];
+              const leg = route.legs[0];
+
+              resolve({
+                distance: leg.distance?.text || "不明",
+                duration: leg.duration?.text || "不明",
+              });
+            } else {
+              // 徒歩経路が見つからない場合は直線距離にフォールバック
+              const directDistance = calculateDistance(
+                origin.lat,
+                origin.lng,
+                destination.lat,
+                destination.lng
+              );
+              const formattedDistance = formatDistance(directDistance);
+              const estimatedDuration = Math.round(
+                (directDistance * 1000) / 80
+              ); // 時速4.8km (80m/分) で概算
+
+              resolve({
+                distance: `約${formattedDistance}`,
+                duration: `約${estimatedDuration}分`,
+              });
+            }
+          }
+        );
+      })
+      .catch((error) => {
+        reject(new Error("徒歩経路の計算に失敗しました: " + error.message));
+      });
+  });
 };

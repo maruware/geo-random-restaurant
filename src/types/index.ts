@@ -17,6 +17,8 @@ export interface Restaurant {
     open_now?: boolean;
   };
   photos?: google.maps.places.PlacePhoto[];
+  walkingDistance?: string; // 徒歩距離を追加
+  walkingDuration?: string; // 徒歩時間を追加
 }
 
 export interface SearchSettings {

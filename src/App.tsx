@@ -3,7 +3,10 @@ import { useState, useCallback } from "react";
 import "./App.css";
 import type { Restaurant } from "./types";
 import { useGeolocation } from "./hooks/useGeolocation";
-import { searchNearbyRestaurants } from "./utils/googleMaps";
+import {
+  searchNearbyRestaurants,
+  calculateWalkingDistance,
+} from "./utils/googleMaps";
 import { SearchSettingsComponent } from "./components/SearchSettings";
 import { LocationSection } from "./components/LocationSection";
 import { RestaurantResult } from "./components/RestaurantResult";
@@ -40,6 +43,22 @@ function App() {
         minRating,
         openOnly
       );
+
+      // レストランの緯度経度が取得できている場合、徒歩経路距離を計算
+      if (restaurant.lat && restaurant.lng) {
+        try {
+          const walkingInfo = await calculateWalkingDistance(location, {
+            lat: restaurant.lat,
+            lng: restaurant.lng,
+          });
+          restaurant.walkingDistance = walkingInfo.distance;
+          restaurant.walkingDuration = walkingInfo.duration;
+        } catch (walkingError) {
+          console.warn("徒歩経路の計算に失敗しました:", walkingError);
+          // 徒歩経路の計算に失敗しても、レストラン情報は表示する
+        }
+      }
+
       setSelectedRestaurant(restaurant);
     } catch (error) {
       setSearchError((error as Error).message);
