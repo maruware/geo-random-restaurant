@@ -78,7 +78,7 @@ export const searchNearbyRestaurants = async (
   return promisifyPlacesCallback<Restaurant>((resolve, reject) => {
     service.nearbySearch(
       request,
-      (
+      async (
         results: google.maps.places.PlaceResult[] | null,
         status: google.maps.places.PlacesServiceStatus
       ) => {
@@ -102,6 +102,19 @@ export const searchNearbyRestaurants = async (
           );
           const selected = filteredRestaurants[randomIndex];
 
+          // 詳細な営業時間情報を取得
+          let detailedOpeningHours = selected.opening_hours;
+          if (selected.place_id) {
+            try {
+              const details = await getPlaceDetails(service, selected.place_id);
+              if (details?.opening_hours) {
+                detailedOpeningHours = details.opening_hours;
+              }
+            } catch (error) {
+              console.warn("営業時間の詳細取得に失敗:", error);
+            }
+          }
+
           resolve({
             place_id: selected.place_id!,
             name: selected.name!,
@@ -109,7 +122,7 @@ export const searchNearbyRestaurants = async (
             vicinity: selected.vicinity!,
             lat: selected.geometry?.location?.lat(), // 緯度を追加
             lng: selected.geometry?.location?.lng(), // 経度を追加
-            opening_hours: selected.opening_hours,
+            opening_hours: detailedOpeningHours,
             photos: selected.photos,
           });
         } else {
@@ -118,6 +131,33 @@ export const searchNearbyRestaurants = async (
       }
     );
   });
+};
+
+// Place Detailsを取得するヘルパー関数
+const getPlaceDetails = async (
+  service: google.maps.places.PlacesService,
+  placeId: string
+): Promise<google.maps.places.PlaceResult | null> => {
+  return promisifyPlacesCallback<google.maps.places.PlaceResult | null>(
+    (resolve, reject) => {
+      service.getDetails(
+        {
+          placeId: placeId,
+          fields: ["opening_hours"],
+        },
+        (
+          result: google.maps.places.PlaceResult | null,
+          status: google.maps.places.PlacesServiceStatus
+        ) => {
+          if (status === google.maps.places.PlacesServiceStatus.OK) {
+            resolve(result);
+          } else {
+            reject(new Error(`詳細情報の取得に失敗: ${status}`));
+          }
+        }
+      );
+    }
+  );
 };
 
 export const getAddressFromCoordinates = async (
@@ -278,7 +318,7 @@ export const searchNearbyRestaurantsWithProbability = async (
   return promisifyPlacesCallback<Restaurant>((resolve, reject) => {
     service.nearbySearch(
       request,
-      (
+      async (
         results: google.maps.places.PlaceResult[] | null,
         status: google.maps.places.PlacesServiceStatus
       ) => {
@@ -303,6 +343,19 @@ export const searchNearbyRestaurantsWithProbability = async (
             restaurantHistory
           );
 
+          // 詳細な営業時間情報を取得
+          let detailedOpeningHours = selected.opening_hours;
+          if (selected.place_id) {
+            try {
+              const details = await getPlaceDetails(service, selected.place_id);
+              if (details?.opening_hours) {
+                detailedOpeningHours = details.opening_hours;
+              }
+            } catch (error) {
+              console.warn("営業時間の詳細取得に失敗:", error);
+            }
+          }
+
           resolve({
             place_id: selected.place_id!,
             name: selected.name!,
@@ -310,7 +363,7 @@ export const searchNearbyRestaurantsWithProbability = async (
             vicinity: selected.vicinity!,
             lat: selected.geometry?.location?.lat(),
             lng: selected.geometry?.location?.lng(),
-            opening_hours: selected.opening_hours,
+            opening_hours: detailedOpeningHours,
             photos: selected.photos,
           });
         } else {

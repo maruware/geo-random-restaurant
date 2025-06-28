@@ -15,6 +15,7 @@ export interface Restaurant {
   lng?: number; // 経度を追加
   opening_hours?: {
     open_now?: boolean;
+    weekday_text?: string[]; // 営業時間の詳細テキスト
   };
   photos?: google.maps.places.PlacePhoto[];
   walkingDistance?: string; // 徒歩距離を追加

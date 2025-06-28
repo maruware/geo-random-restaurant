@@ -42,9 +42,14 @@
   font-size: 16px;
 }
 
+/* 営業時間セクション */
+.opening-hours {
+  margin: 15px 0;
+}
+
 /* 営業状況 */
 .status {
-  margin: 15px 0;
+  margin: 10px 0;
   font-weight: 500;
   font-size: 16px;
 }
@@ -55,6 +60,60 @@
 
 .status.closed {
   color: #dc3545;
+}
+
+/* 今日の営業時間 */
+.today-hours {
+  margin: 8px 0;
+  color: #495057;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+/* 営業時間詳細（折りたたみ） */
+.all-hours {
+  margin: 10px 0;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  overflow: hidden;
+}
+
+.all-hours summary {
+  background: #f8f9fa;
+  padding: 10px 15px;
+  cursor: pointer;
+  font-weight: 500;
+  color: #495057;
+  user-select: none;
+  transition: background-color 0.2s;
+}
+
+.all-hours summary:hover {
+  background: #e9ecef;
+}
+
+.all-hours[open] summary {
+  border-bottom: 1px solid #e9ecef;
+}
+
+.hours-list {
+  padding: 10px 15px;
+  background: white;
+}
+
+.hours-item {
+  margin: 5px 0;
+  color: #495057;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.hours-item:first-child {
+  margin-top: 0;
+}
+
+.hours-item:last-child {
+  margin-bottom: 0;
 }
 
 /* アクションボタン */
@@ -140,6 +199,15 @@
     min-width: auto;
     width: 100%;
   }
+
+  .all-hours summary {
+    padding: 8px 12px;
+    font-size: 14px;
+  }
+
+  .hours-list {
+    padding: 8px 12px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -159,6 +227,14 @@
   .retry-button {
     padding: 10px 12px;
     font-size: 14px;
+  }
+
+  .today-hours {
+    font-size: 14px;
+  }
+
+  .hours-item {
+    font-size: 13px;
   }
 }
 
@@ -180,6 +256,19 @@
   }
 
   .maps-button {
+    font-size: 12px;
+  }
+
+  .all-hours summary {
+    padding: 6px 10px;
+    font-size: 13px;
+  }
+
+  .hours-list {
+    padding: 6px 10px;
+  }
+
+  .hours-item {
     font-size: 12px;
   }
 }
