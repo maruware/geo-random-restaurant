@@ -6,10 +6,54 @@
   border: 1px solid #e9ecef;
 }
 
+.settings-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
 .settings h2 {
-  margin: 0 0 20px 0;
+  margin: 0;
   color: #495057;
   font-size: 1.3rem;
+}
+
+/* モードスイッチ */
+.mode-switch {
+  display: flex;
+  gap: 4px;
+  background: white;
+  padding: 3px;
+  border-radius: 6px;
+  border: 1px solid #dee2e6;
+}
+
+.mode-button {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 4px;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.5;
+}
+
+.mode-button:hover {
+  opacity: 0.8;
+  background: #f8f9fa;
+}
+
+.mode-button.active {
+  opacity: 1;
+  background: #667eea;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+}
+
+.mode-button:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
 }
 
 .setting-group {
@@ -62,6 +106,16 @@
 
 /* レスポンシブ対応 */
 @media (max-width: 768px) {
+  .settings-header {
+    /* 一行表示を維持 */
+    gap: 10px;
+  }
+
+  .settings h2 {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
   .setting-group {
     flex-direction: column;
     align-items: flex-start;
@@ -80,5 +134,14 @@
 @media (max-width: 480px) {
   .settings {
     padding: 20px;
+  }
+
+  .settings h2 {
+    font-size: 1rem;
+  }
+
+  .mode-button {
+    padding: 4px 8px;
+    font-size: 1rem;
   }
 }
