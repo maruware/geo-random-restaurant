@@ -1,0 +1,107 @@
+.building-selector {
+  background: #f8f9fa;
+  padding: 1.5rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+}
+
+.building-selector h3 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+  font-size: 1.1rem;
+}
+
+.building-selector-help {
+  margin: 0 0 1rem 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.buildings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.building-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background: white;
+  border: 2px solid #e9ecef;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.building-item:hover {
+  border-color: #4a90e2;
+  box-shadow: 0 2px 8px rgba(74, 144, 226, 0.1);
+}
+
+.building-item.selected {
+  border-color: #4a90e2;
+  background: #e3f2fd;
+}
+
+.building-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.building-type {
+  font-size: 0.9rem;
+  color: #6c757d;
+}
+
+.building-name {
+  font-weight: 600;
+  color: #2c3e50;
+  font-size: 1rem;
+}
+
+.building-vicinity {
+  font-size: 0.85rem;
+  color: #6c757d;
+}
+
+.building-checkbox {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #dee2e6;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #4a90e2;
+  flex-shrink: 0;
+}
+
+.building-item.selected .building-checkbox {
+  background: #4a90e2;
+  border-color: #4a90e2;
+  color: white;
+}
+
+.selected-count {
+  text-align: center;
+  padding: 0.5rem;
+  background: white;
+  border-radius: 6px;
+  font-weight: 500;
+  color: #4a90e2;
+}
+
+.error {
+  color: #dc3545;
+  margin: 0;
+  font-size: 0.9rem;
+}

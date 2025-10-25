@@ -26,4 +26,14 @@ export interface SearchSettings {
   radius: number;
   minRating: number;
   openOnly: boolean; // 営業中のみを検索するかどうか
+  indoorMode: boolean; // 屋内施設優先モード
+}
+
+export interface Building {
+  place_id: string;
+  name: string;
+  vicinity: string;
+  lat: number;
+  lng: number;
+  types: string[];
 }

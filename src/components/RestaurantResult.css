@@ -35,11 +35,38 @@
   font-weight: 600;
 }
 
+/* レーティング表示 */
+.rating {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin: 15px 0;
+}
+
+.rating .stars {
+  display: flex;
+}
+
+.rating .rating-value {
+  color: #6c757d;
+  font-size: 16px;
+  font-weight: 500;
+}
+
 /* 住所 */
 .address {
   margin: 15px 0;
   color: #6c757d;
   font-size: 16px;
+}
+
+/* 距離表示 */
+.distance {
+  margin: 15px 0;
+  color: #495057;
+  font-size: 16px;
+  font-weight: 500;
 }
 
 /* 営業時間セクション */

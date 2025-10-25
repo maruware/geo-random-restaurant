@@ -1,15 +1,17 @@
 /// <reference types="google.maps" />
 import { useState, useCallback } from "react";
 import "./App.css";
-import type { Restaurant } from "./types";
+import type { Restaurant, Building } from "./types";
 import { useGeolocation } from "./hooks/useGeolocation";
 import {
   searchNearbyRestaurantsWithProbability,
+  searchRestaurantsInBuildings,
   calculateWalkingDistance,
 } from "./utils/googleMaps";
 import { SearchSettingsComponent } from "./components/SearchSettings";
 import { LocationSection } from "./components/LocationSection";
 import { RestaurantResult } from "./components/RestaurantResult";
+import { BuildingSelector } from "./components/BuildingSelector";
 
 function App() {
   const {
@@ -21,6 +23,8 @@ function App() {
   const [searchRadius, setSearchRadius] = useState(1000);
   const [minRating, setMinRating] = useState(3.5);
   const [openOnly, setOpenOnly] = useState(false); // 営業中フィルタの状態追加
+  const [indoorMode, setIndoorMode] = useState(false); // 屋内施設優先モード
+  const [selectedBuildings, setSelectedBuildings] = useState<Building[]>([]); // 選択された施設
   const [selectedRestaurant, setSelectedRestaurant] =
     useState<Restaurant | null>(null);
   const [isSearching, setIsSearching] = useState(false);
@@ -35,18 +39,36 @@ function App() {
       return;
     }
 
+    // 屋内モードで施設が選択されていない場合はエラー
+    if (indoorMode && selectedBuildings.length === 0) {
+      setSearchError("施設を選択してください");
+      return;
+    }
+
     setIsSearching(true);
     setSearchError(null);
     setSelectedRestaurant(null);
 
     try {
-      const restaurant = await searchNearbyRestaurantsWithProbability(
-        location,
-        searchRadius,
-        minRating,
-        openOnly,
-        restaurantHistory // 履歴を渡す
-      );
+      let restaurant: Restaurant;
+
+      // 屋内モードか通常モードかで検索方法を切り替え
+      if (indoorMode) {
+        restaurant = await searchRestaurantsInBuildings(
+          selectedBuildings,
+          minRating,
+          openOnly,
+          restaurantHistory
+        );
+      } else {
+        restaurant = await searchNearbyRestaurantsWithProbability(
+          location,
+          searchRadius,
+          minRating,
+          openOnly,
+          restaurantHistory
+        );
+      }
 
       // レストランの緯度経度が取得できている場合、徒歩経路距離を計算
       if (restaurant.lat && restaurant.lng) {
@@ -77,7 +99,15 @@ function App() {
     } finally {
       setIsSearching(false);
     }
-  }, [location, searchRadius, minRating, openOnly, restaurantHistory]);
+  }, [
+    location,
+    searchRadius,
+    minRating,
+    openOnly,
+    indoorMode,
+    selectedBuildings,
+    restaurantHistory,
+  ]);
 
   const isLoading = locationLoading || isSearching;
   const error = locationError || searchError;
@@ -91,10 +121,11 @@ function App() {
 
       <main className="app-main">
         <SearchSettingsComponent
-          settings={{ radius: searchRadius, minRating, openOnly }}
+          settings={{ radius: searchRadius, minRating, openOnly, indoorMode }}
           onRadiusChange={setSearchRadius}
           onMinRatingChange={setMinRating}
           onOpenOnlyChange={setOpenOnly}
+          onIndoorModeChange={setIndoorMode}
         />
 
         <LocationSection
@@ -102,6 +133,15 @@ function App() {
           isLoading={locationLoading}
           onGetLocation={getCurrentLocation}
         />
+
+        {indoorMode && location && (
+          <BuildingSelector
+            location={location}
+            radius={searchRadius}
+            selectedBuildings={selectedBuildings}
+            onBuildingsChange={setSelectedBuildings}
+          />
+        )}
 
         <section className="search-section">
           <button

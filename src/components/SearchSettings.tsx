@@ -5,18 +5,40 @@ interface SearchSettingsProps {
   settings: SearchSettings;
   onRadiusChange: (radius: number) => void;
   onMinRatingChange: (minRating: number) => void;
-  onOpenOnlyChange: (openOnly: boolean) => void; // 新しいプロパティ追加
+  onOpenOnlyChange: (openOnly: boolean) => void;
+  onIndoorModeChange: (indoorMode: boolean) => void; // 屋内モード追加
 }
 
 export const SearchSettingsComponent = ({
   settings,
   onRadiusChange,
   onMinRatingChange,
-  onOpenOnlyChange, // 新しいプロパティ追加
+  onOpenOnlyChange,
+  onIndoorModeChange, // 屋内モード追加
 }: SearchSettingsProps) => {
   return (
     <section className="settings">
-      <h2>検索設定</h2>
+      <div className="settings-header">
+        <h2>検索設定</h2>
+        <div className="mode-switch">
+          <button
+            type="button"
+            className={`mode-button ${!settings.indoorMode ? "active" : ""}`}
+            onClick={() => onIndoorModeChange(false)}
+            title="通常モード"
+          >
+            🗺️
+          </button>
+          <button
+            type="button"
+            className={`mode-button ${settings.indoorMode ? "active" : ""}`}
+            onClick={() => onIndoorModeChange(true)}
+            title="屋内施設優先モード"
+          >
+            🏢
+          </button>
+        </div>
+      </div>
 
       <div className="setting-group">
         <label htmlFor="radius">検索範囲:</label>

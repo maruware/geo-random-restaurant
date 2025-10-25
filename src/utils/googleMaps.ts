@@ -1,6 +1,7 @@
 /// <reference types="google.maps" />
 import { Loader } from "@googlemaps/js-api-loader";
-import type { Location, Restaurant } from "../types";
+import pMap from "p-map";
+import type { Location, Restaurant, Building } from "../types";
 
 // Google Maps APIの共通Loaderインスタンス
 let googleMapsLoader: Loader | null = null;
@@ -404,4 +405,222 @@ const selectRestaurantWithProbability = (
 
   // フォールバック（通常は到達しない）
   return restaurants[Math.floor(Math.random() * restaurants.length)];
+};
+
+// 近隣の大型施設（ビル・商業施設）を検索
+export const searchNearbyBuildings = async (
+  location: Location,
+  radius: number
+): Promise<Building[]> => {
+  const loader = getGoogleMapsLoader();
+  const [{ PlacesService }, { LatLng }] = await Promise.all([
+    loader.importLibrary("places"),
+    loader.importLibrary("core"),
+  ]);
+
+  const service = new PlacesService(document.createElement("div"));
+
+  // 複数のタイプの施設を検索
+  const types = ["shopping_mall", "department_store", "train_station"];
+
+  const allBuildingsArrays = await pMap(
+    types,
+    async (type) => {
+      const request = {
+        location: new LatLng(location.lat, location.lng),
+        radius: radius,
+        type: type,
+      };
+
+      try {
+        const buildings = await promisifyPlacesCallback<Building[]>(
+          (resolve) => {
+            service.nearbySearch(
+              request,
+              (
+                results: google.maps.places.PlaceResult[] | null,
+                status: google.maps.places.PlacesServiceStatus
+              ) => {
+                if (
+                  status === google.maps.places.PlacesServiceStatus.OK &&
+                  results
+                ) {
+                  const mappedBuildings = results
+                    .filter(
+                      (place) =>
+                        place.place_id && place.name && place.geometry?.location
+                    )
+                    .map((place) => ({
+                      place_id: place.place_id!,
+                      name: place.name!,
+                      vicinity: place.vicinity || "",
+                      lat: place.geometry!.location!.lat(),
+                      lng: place.geometry!.location!.lng(),
+                      types: place.types || [],
+                    }));
+                  resolve(mappedBuildings);
+                } else {
+                  resolve([]);
+                }
+              }
+            );
+          }
+        );
+        return buildings;
+      } catch (error) {
+        console.warn(`Type ${type} の検索に失敗:`, error);
+        return [];
+      }
+    },
+    { concurrency: 3 }
+  );
+
+  const allBuildings = allBuildingsArrays.flat();
+
+  // place_idで重複を削除
+  const uniqueBuildings = Array.from(
+    new Map(allBuildings.map((b) => [b.place_id, b])).values()
+  );
+
+  return uniqueBuildings;
+};
+
+// 選択した施設内のレストランを検索
+export const searchRestaurantsInBuildings = async (
+  buildings: Building[],
+  minRating: number,
+  openOnly: boolean = false,
+  restaurantHistory: Map<string, number> = new Map()
+): Promise<Restaurant> => {
+  const loader = getGoogleMapsLoader();
+  const [{ PlacesService }, { LatLng }] = await Promise.all([
+    loader.importLibrary("places"),
+    loader.importLibrary("core"),
+  ]);
+
+  const service = new PlacesService(document.createElement("div"));
+
+  const allRestaurantsArrays = await pMap(
+    buildings,
+    async (building) => {
+      // テキスト検索を使用して施設名を含めた検索
+      const request = {
+        query: `${building.name} レストラン`,
+        location: new LatLng(building.lat, building.lng),
+        radius: 100, // 施設周辺100m以内
+        type: "restaurant",
+        openNow: openOnly,
+      };
+
+      try {
+        const restaurants = await promisifyPlacesCallback<
+          google.maps.places.PlaceResult[]
+        >((resolve) => {
+          service.textSearch(
+            request,
+            (
+              results: google.maps.places.PlaceResult[] | null,
+              status: google.maps.places.PlacesServiceStatus
+            ) => {
+              if (
+                status === google.maps.places.PlacesServiceStatus.OK &&
+                results
+              ) {
+                // 評価フィルタと住所フィルタを適用
+                const filteredResults = results.filter((place) => {
+                  // 評価チェック
+                  if (!place.rating || place.rating < minRating) {
+                    return false;
+                  }
+
+                  // 住所に施設名が含まれているかチェック（より厳密に施設内に絞る）
+                  if (place.formatted_address) {
+                    const addressLower = place.formatted_address.toLowerCase();
+                    const buildingNameLower = building.name.toLowerCase();
+                    // 施設名が住所に含まれているか、または非常に近い場合のみ
+                    if (
+                      addressLower.includes(buildingNameLower) ||
+                      place.vicinity?.toLowerCase().includes(buildingNameLower)
+                    ) {
+                      return true;
+                    }
+                  }
+
+                  // 距離が非常に近い場合も許可（20m以内）
+                  if (place.geometry?.location) {
+                    const distance = calculateDistance(
+                      building.lat,
+                      building.lng,
+                      place.geometry.location.lat(),
+                      place.geometry.location.lng()
+                    );
+                    return distance < 0.02; // 20m以内
+                  }
+
+                  return false;
+                });
+                resolve(filteredResults);
+              } else if (
+                status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS
+              ) {
+                // 結果が0件の場合は空配列を返す
+                resolve([]);
+              } else {
+                resolve([]);
+              }
+            }
+          );
+        });
+
+        return restaurants;
+      } catch (error) {
+        console.warn(`施設 ${building.name} のレストラン検索に失敗:`, error);
+        return [];
+      }
+    },
+    { concurrency: 2 }
+  );
+
+  const allRestaurants = allRestaurantsArrays.flat();
+
+  // place_idで重複を削除
+  const uniqueRestaurants = Array.from(
+    new Map(allRestaurants.map((r) => [r.place_id, r])).values()
+  );
+
+  if (uniqueRestaurants.length === 0) {
+    throw new Error(
+      "選択した施設内に条件に合うレストランが見つかりませんでした"
+    );
+  }
+
+  // 確率調整を適用してレストランを選択
+  const selected = selectRestaurantWithProbability(
+    uniqueRestaurants,
+    restaurantHistory
+  );
+
+  // 詳細な営業時間情報を取得
+  let detailedOpeningHours = selected.opening_hours;
+  if (selected.place_id) {
+    try {
+      const details = await getPlaceDetails(service, selected.place_id);
+      if (details?.opening_hours) {
+        detailedOpeningHours = details.opening_hours;
+      }
+    } catch (error) {
+      console.warn("営業時間の詳細取得に失敗:", error);
+    }
+  }
+
+  return {
+    place_id: selected.place_id!,
+    name: selected.name!,
+    rating: selected.rating,
+    vicinity: selected.vicinity || selected.formatted_address || "",
+    lat: selected.geometry?.location?.lat(),
+    lng: selected.geometry?.location?.lng(),
+    opening_hours: detailedOpeningHours,
+    photos: selected.photos,
+  };
 };
