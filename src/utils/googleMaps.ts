@@ -1,26 +1,10 @@
-/// <reference types="google.maps" />
-import { Loader } from "@googlemaps/js-api-loader";
+import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import pMap from "p-map";
 import type { Location, Restaurant, Building } from "../types";
 
-// Google Maps APIの共通Loaderインスタンス
-let googleMapsLoader: Loader | null = null;
-
-const getGoogleMapsLoader = () => {
-  if (!googleMapsLoader) {
-    const apiKey = import.meta.env.VITE_GOOGLE_MAPS_API_KEY;
-    if (!apiKey) {
-      throw new Error("Google Maps API Keyが設定されていません");
-    }
-
-    googleMapsLoader = new Loader({
-      apiKey: apiKey,
-      version: "weekly",
-      // importLibrary使用時はlibrariesプロパティは不要
-    });
-  }
-  return googleMapsLoader;
-};
+setOptions({
+  key: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+});
 
 export const getGoogleMapsUrl = (restaurant: Restaurant): string => {
   // 緯度経度が利用可能な場合は具体的な位置を使用
@@ -76,8 +60,7 @@ const getPlaceDetails = async (
 export const getAddressFromCoordinates = async (
   location: Location
 ): Promise<string> => {
-  const loader = getGoogleMapsLoader();
-  const { Geocoder } = await loader.importLibrary("geocoding");
+  const { Geocoder } = await importLibrary("geocoding");
 
   const geocoder = new Geocoder();
 
@@ -148,9 +131,8 @@ export const calculateWalkingDistance = async (
   origin: Location,
   destination: { lat: number; lng: number }
 ): Promise<{ distance: string; duration: string }> => {
-  const loader = getGoogleMapsLoader();
   const [{ DirectionsService, TravelMode }, { UnitSystem }] = await Promise.all(
-    [loader.importLibrary("routes"), loader.importLibrary("core")]
+    [importLibrary("routes"), importLibrary("core")]
   );
 
   const directionsService = new DirectionsService();
@@ -204,10 +186,9 @@ export const searchNearbyRestaurantsWithProbability = async (
   openOnly: boolean = false,
   restaurantHistory: Map<string, number> = new Map()
 ): Promise<Restaurant> => {
-  const loader = getGoogleMapsLoader();
   const [{ PlacesService }, { LatLng }] = await Promise.all([
-    loader.importLibrary("places"),
-    loader.importLibrary("core"),
+    importLibrary("places"),
+    importLibrary("core"),
   ]);
 
   const service = new PlacesService(document.createElement("div"));
@@ -313,10 +294,9 @@ export const searchNearbyBuildings = async (
   location: Location,
   radius: number
 ): Promise<Building[]> => {
-  const loader = getGoogleMapsLoader();
   const [{ PlacesService }, { LatLng }] = await Promise.all([
-    loader.importLibrary("places"),
-    loader.importLibrary("core"),
+    importLibrary("places"),
+    importLibrary("core"),
   ]);
 
   const service = new PlacesService(document.createElement("div"));
@@ -393,10 +373,9 @@ export const searchRestaurantsInBuildings = async (
   openOnly: boolean = false,
   restaurantHistory: Map<string, number> = new Map()
 ): Promise<Restaurant> => {
-  const loader = getGoogleMapsLoader();
   const [{ PlacesService }, { LatLng }] = await Promise.all([
-    loader.importLibrary("places"),
-    loader.importLibrary("core"),
+    importLibrary("places"),
+    importLibrary("core"),
   ]);
 
   const service = new PlacesService(document.createElement("div"));
