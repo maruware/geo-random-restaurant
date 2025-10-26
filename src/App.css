@@ -138,7 +138,7 @@ button:disabled {
   }
 
   .app-header h1 {
-    font-size: 2rem;
+    font-size: 1.8rem;
   }
 
   .app-header p {
@@ -161,6 +161,16 @@ button:disabled {
   }
 
   .app-header h1 {
-    font-size: 1.8rem;
+    font-size: 1.4rem;
+  }
+
+  .app-header p {
+    font-size: 0.9rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-header h1 {
+    font-size: 1.2rem;
   }
 }
