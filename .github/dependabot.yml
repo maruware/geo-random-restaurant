@@ -1,0 +1,61 @@
+version: 2
+updates:
+  # npm依存関係の更新
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 10
+    # プルリクエストにラベルを追加
+    labels:
+      - "dependencies"
+      - "javascript"
+    # セマンティックバージョニングに基づいてコミットメッセージをグループ化
+    commit-message:
+      prefix: "chore(deps)"
+      prefix-development: "chore(deps-dev)"
+      include: "scope"
+    # バージョン更新戦略
+    versioning-strategy: auto
+    # グループ化設定
+    groups:
+      # React関連のパッケージをまとめる
+      react:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      # ESLint関連のパッケージをまとめる
+      eslint:
+        patterns:
+          - "eslint*"
+          - "@eslint/*"
+      # TypeScript関連のパッケージをまとめる
+      typescript:
+        patterns:
+          - "typescript*"
+          - "@types/*"
+        exclude-patterns:
+          - "@types/react*"
+      # Vite関連のパッケージをまとめる
+      vite:
+        patterns:
+          - "vite*"
+          - "@vitejs/*"
+
+  # GitHub Actionsの更新
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "chore(ci)"
