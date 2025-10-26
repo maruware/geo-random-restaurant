@@ -46,94 +46,6 @@ const promisifyPlacesCallback = <T>(
   });
 };
 
-export const searchNearbyRestaurants = async (
-  location: Location,
-  radius: number,
-  minRating: number,
-  openOnly: boolean = false // 営業中フィルタのパラメータを追加
-): Promise<Restaurant> => {
-  const loader = getGoogleMapsLoader();
-  const [{ PlacesService }, { LatLng }] = await Promise.all([
-    loader.importLibrary("places"),
-    loader.importLibrary("core"),
-  ]);
-
-  const service = new PlacesService(document.createElement("div"));
-
-  const request = {
-    location: new LatLng(location.lat, location.lng),
-    radius: radius,
-    type: "restaurant",
-    openNow: openOnly, // API側で営業中フィルタを適用
-    fields: [
-      "place_id",
-      "name",
-      "rating",
-      "vicinity",
-      "geometry", // 位置情報を取得するために追加
-      "opening_hours",
-      "photos",
-    ],
-  };
-
-  return promisifyPlacesCallback<Restaurant>((resolve, reject) => {
-    service.nearbySearch(
-      request,
-      async (
-        results: google.maps.places.PlaceResult[] | null,
-        status: google.maps.places.PlacesServiceStatus
-      ) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-          // 評価フィルタのみをJavaScript側で適用
-          const filteredRestaurants = results.filter(
-            (place: google.maps.places.PlaceResult) =>
-              place.rating && place.rating >= minRating
-          );
-
-          if (filteredRestaurants.length === 0) {
-            const filterMessage = openOnly
-              ? `半径${radius}m以内に評価${minRating}以上かつ営業中のレストランが見つかりませんでした`
-              : `半径${radius}m以内に評価${minRating}以上のレストランが見つかりませんでした`;
-            reject(new Error(filterMessage));
-            return;
-          }
-
-          const randomIndex = Math.floor(
-            Math.random() * filteredRestaurants.length
-          );
-          const selected = filteredRestaurants[randomIndex];
-
-          // 詳細な営業時間情報を取得
-          let detailedOpeningHours = selected.opening_hours;
-          if (selected.place_id) {
-            try {
-              const details = await getPlaceDetails(service, selected.place_id);
-              if (details?.opening_hours) {
-                detailedOpeningHours = details.opening_hours;
-              }
-            } catch (error) {
-              console.warn("営業時間の詳細取得に失敗:", error);
-            }
-          }
-
-          resolve({
-            place_id: selected.place_id!,
-            name: selected.name!,
-            rating: selected.rating,
-            vicinity: selected.vicinity!,
-            lat: selected.geometry?.location?.lat(), // 緯度を追加
-            lng: selected.geometry?.location?.lng(), // 経度を追加
-            opening_hours: detailedOpeningHours,
-            photos: selected.photos,
-          });
-        } else {
-          reject(new Error("レストランの検索に失敗しました"));
-        }
-      }
-    );
-  });
-};
-
 // Place Detailsを取得するヘルパー関数
 const getPlaceDetails = async (
   service: google.maps.places.PlacesService,
@@ -300,79 +212,68 @@ export const searchNearbyRestaurantsWithProbability = async (
 
   const service = new PlacesService(document.createElement("div"));
 
-  const request = {
+  const request: google.maps.places.PlaceSearchRequest = {
     location: new LatLng(location.lat, location.lng),
     radius: radius,
     type: "restaurant",
     openNow: openOnly, // API側で営業中フィルタを適用
-    fields: [
-      "place_id",
-      "name",
-      "rating",
-      "vicinity",
-      "geometry",
-      "opening_hours",
-      "photos",
-    ],
   };
 
-  return promisifyPlacesCallback<Restaurant>((resolve, reject) => {
-    service.nearbySearch(
-      request,
-      async (
-        results: google.maps.places.PlaceResult[] | null,
-        status: google.maps.places.PlacesServiceStatus
-      ) => {
-        if (status === google.maps.places.PlacesServiceStatus.OK && results) {
-          // 評価フィルタのみをJavaScript側で適用
-          const filteredRestaurants = results.filter(
-            (place: google.maps.places.PlaceResult) =>
-              place.rating && place.rating >= minRating
-          );
-
-          if (filteredRestaurants.length === 0) {
-            const filterMessage = openOnly
-              ? `半径${radius}m以内に評価${minRating}以上かつ営業中のレストランが見つかりませんでした`
-              : `半径${radius}m以内に評価${minRating}以上のレストランが見つかりませんでした`;
-            reject(new Error(filterMessage));
-            return;
-          }
-
-          // 確率調整を適用してレストランを選択
-          const selected = selectRestaurantWithProbability(
-            filteredRestaurants,
-            restaurantHistory
-          );
-
-          // 詳細な営業時間情報を取得
-          let detailedOpeningHours = selected.opening_hours;
-          if (selected.place_id) {
-            try {
-              const details = await getPlaceDetails(service, selected.place_id);
-              if (details?.opening_hours) {
-                detailedOpeningHours = details.opening_hours;
-              }
-            } catch (error) {
-              console.warn("営業時間の詳細取得に失敗:", error);
-            }
-          }
-
-          resolve({
-            place_id: selected.place_id!,
-            name: selected.name!,
-            rating: selected.rating,
-            vicinity: selected.vicinity!,
-            lat: selected.geometry?.location?.lat(),
-            lng: selected.geometry?.location?.lng(),
-            opening_hours: detailedOpeningHours,
-            photos: selected.photos,
-          });
-        } else {
-          reject(new Error("レストランの検索に失敗しました"));
-        }
-      }
-    );
+  const { results, status } = await promisifyPlacesCallback<{
+    results: google.maps.places.PlaceResult[] | null;
+    status: google.maps.places.PlacesServiceStatus;
+  }>((resolve) => {
+    service.nearbySearch(request, (results, status) => {
+      resolve({ results, status });
+    });
   });
+
+  if (status !== google.maps.places.PlacesServiceStatus.OK || !results) {
+    throw new Error("レストランの検索に失敗しました");
+  }
+
+  // 評価フィルタのみをJavaScript側で適用
+  const filteredRestaurants = results.filter(
+    (place: google.maps.places.PlaceResult) =>
+      place.rating && place.rating >= minRating
+  );
+
+  if (filteredRestaurants.length === 0) {
+    const filterMessage = openOnly
+      ? `半径${radius}m以内に評価${minRating}以上かつ営業中のレストランが見つかりませんでした`
+      : `半径${radius}m以内に評価${minRating}以上のレストランが見つかりませんでした`;
+    throw new Error(filterMessage);
+  }
+
+  // 確率調整を適用してレストランを選択
+  const selected = selectRestaurantWithProbability(
+    filteredRestaurants,
+    restaurantHistory
+  );
+
+  // 詳細な営業時間情報を取得
+  let detailedOpeningHours = selected.opening_hours;
+  if (selected.place_id) {
+    try {
+      const details = await getPlaceDetails(service, selected.place_id);
+      if (details?.opening_hours) {
+        detailedOpeningHours = details.opening_hours;
+      }
+    } catch (error) {
+      console.warn("営業時間の詳細取得に失敗:", error);
+    }
+  }
+
+  return {
+    place_id: selected.place_id!,
+    name: selected.name!,
+    rating: selected.rating,
+    vicinity: selected.vicinity!,
+    lat: selected.geometry?.location?.lat(),
+    lng: selected.geometry?.location?.lng(),
+    opening_hours: detailedOpeningHours,
+    photos: selected.photos,
+  };
 };
 
 // 履歴に基づいて確率調整したレストラン選択
