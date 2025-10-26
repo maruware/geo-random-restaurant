@@ -27,7 +27,7 @@ export const SearchSettingsComponent = ({
             onClick={() => onIndoorModeChange(false)}
             title="通常モード"
           >
-            🗺️
+            🌤️
           </button>
           <button
             type="button"
@@ -35,7 +35,7 @@ export const SearchSettingsComponent = ({
             onClick={() => onIndoorModeChange(true)}
             title="屋内施設優先モード"
           >
-            🏢
+            🏬
           </button>
         </div>
       </div>
