@@ -12,8 +12,8 @@
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
     "p-map": "^7.0.4",
-    "react": "^19.2.0",
-    "react-dom": "^19.2.0"
+    "react": "^19.2.1",
+    "react-dom": "^19.2.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
