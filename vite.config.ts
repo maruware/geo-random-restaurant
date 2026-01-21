@@ -21,7 +21,7 @@ export default defineConfig(({ command }) => {
           theme_color: "#667eea",
           background_color: "#ffffff",
           display: "standalone",
-          start_url: "/",
+          start_url: "/geo-random-restaurant/",
           icons: [
             {
               src: "android-chrome-192x192.png",
