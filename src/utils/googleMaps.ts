@@ -1,5 +1,6 @@
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import pMap from "p-map";
+import { shuffle } from "remeda";
 import type { Location, Restaurant, Building } from "../types";
 
 setOptions({
@@ -262,12 +263,15 @@ const selectRestaurantWithProbability = (
   restaurants: google.maps.places.PlaceResult[],
   history: Map<string, number>
 ): google.maps.places.PlaceResult => {
+  // まず配列をシャッフルして、API返却順の偏りを排除
+  const shuffledRestaurants = shuffle(restaurants);
+
   // 各レストランの重みを計算
-  const weights = restaurants.map((restaurant) => {
+  const weights = shuffledRestaurants.map((restaurant) => {
     const placeId = restaurant.place_id!;
     const selectionCount = history.get(placeId) || 0;
-    // 選択回数に応じて重みを計算（25%ずつ減少）
-    const weight = Math.pow(0.25, selectionCount);
+    // 選択回数に応じて重みを計算（50%ずつ減少、より緩やかに）
+    const weight = Math.pow(0.5, selectionCount);
     return { restaurant, weight };
   });
 
@@ -286,7 +290,7 @@ const selectRestaurantWithProbability = (
   }
 
   // フォールバック（通常は到達しない）
-  return restaurants[Math.floor(Math.random() * restaurants.length)];
+  return shuffledRestaurants[Math.floor(Math.random() * shuffledRestaurants.length)];
 };
 
 // 近隣の大型施設（ビル・商業施設）を検索
