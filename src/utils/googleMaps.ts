@@ -1,5 +1,6 @@
 import { importLibrary, setOptions } from "@googlemaps/js-api-loader";
 import pMap from "p-map";
+import { shuffle } from "remeda";
 import type { Location, Restaurant, Building } from "../types";
 
 setOptions({
@@ -178,6 +179,27 @@ export const calculateWalkingDistance = async (
   }
 };
 
+// 円内のランダムな点を生成する関数
+const generateRandomPointInRadius = (
+  center: Location,
+  radiusMeters: number
+): Location => {
+  // 一様分布のために sqrt を使用（中心に偏らないように）
+  const r = radiusMeters * Math.sqrt(Math.random());
+  const theta = Math.random() * 2 * Math.PI;
+
+  // メートルを緯度経度の差分に変換（概算）
+  const deltaLat = (r * Math.cos(theta)) / 111320; // 1度 ≈ 111.32km
+  const deltaLng =
+    (r * Math.sin(theta)) /
+    (111320 * Math.cos((center.lat * Math.PI) / 180));
+
+  return {
+    lat: center.lat + deltaLat,
+    lng: center.lng + deltaLng,
+  };
+};
+
 // 確率調整機能付きのレストラン検索
 export const searchNearbyRestaurantsWithProbability = async (
   location: Location,
@@ -186,18 +208,22 @@ export const searchNearbyRestaurantsWithProbability = async (
   openOnly: boolean = false,
   restaurantHistory: Map<string, number> = new Map()
 ): Promise<Restaurant> => {
-  const [{ PlacesService }, { LatLng }] = await Promise.all([
+  const [{ PlacesService, RankBy }, { LatLng }] = await Promise.all([
     importLibrary("places"),
     importLibrary("core"),
   ]);
 
   const service = new PlacesService(document.createElement("div"));
 
+  // ランダムな検索起点を生成（元の位置からradius内のランダムな点）
+  const randomSearchPoint = generateRandomPointInRadius(location, radius);
+
+  // RankBy.DISTANCE を使用（radius は指定しない、type は必須）
   const request: google.maps.places.PlaceSearchRequest = {
-    location: new LatLng(location.lat, location.lng),
-    radius: radius,
+    location: new LatLng(randomSearchPoint.lat, randomSearchPoint.lng),
     type: "restaurant",
-    openNow: openOnly, // API側で営業中フィルタを適用
+    rankBy: RankBy.DISTANCE,
+    openNow: openOnly,
   };
 
   const { results, status } = await promisifyPlacesCallback<{
@@ -213,8 +239,21 @@ export const searchNearbyRestaurantsWithProbability = async (
     throw new Error("レストランの検索に失敗しました");
   }
 
-  // 評価フィルタのみをJavaScript側で適用
-  const filteredRestaurants = results.filter(
+  // 元の位置からradius内のレストランのみをフィルタリング
+  const radiusKm = radius / 1000;
+  const withinRadiusResults = results.filter((place) => {
+    if (!place.geometry?.location) return false;
+    const distance = calculateDistance(
+      location.lat,
+      location.lng,
+      place.geometry.location.lat(),
+      place.geometry.location.lng()
+    );
+    return distance <= radiusKm;
+  });
+
+  // 評価フィルタを適用
+  const filteredRestaurants = withinRadiusResults.filter(
     (place: google.maps.places.PlaceResult) =>
       place.rating && place.rating >= minRating
   );
@@ -262,17 +301,26 @@ const selectRestaurantWithProbability = (
   restaurants: google.maps.places.PlaceResult[],
   history: Map<string, number>
 ): google.maps.places.PlaceResult => {
+  // まず配列をシャッフルして、API返却順の偏りを排除
+  const shuffledRestaurants = shuffle(restaurants);
+
   // 各レストランの重みを計算
-  const weights = restaurants.map((restaurant) => {
-    const placeId = restaurant.place_id!;
-    const selectionCount = history.get(placeId) || 0;
-    // 選択回数に応じて重みを計算（25%ずつ減少）
-    const weight = Math.pow(0.25, selectionCount);
-    return { restaurant, weight };
-  });
+  const weights = shuffledRestaurants.map(
+    (restaurant: google.maps.places.PlaceResult) => {
+      const placeId = restaurant.place_id!;
+      const selectionCount = history.get(placeId) || 0;
+      // 選択回数に応じて重みを計算（50%ずつ減少）
+      const weight = Math.pow(0.5, selectionCount);
+      return { restaurant, weight };
+    }
+  );
 
   // 重み付き合計を計算
-  const totalWeight = weights.reduce((sum, item) => sum + item.weight, 0);
+  const totalWeight = weights.reduce(
+    (sum: number, item: { restaurant: google.maps.places.PlaceResult; weight: number }) =>
+      sum + item.weight,
+    0
+  );
 
   // ランダムな値を生成
   let random = Math.random() * totalWeight;
@@ -286,7 +334,7 @@ const selectRestaurantWithProbability = (
   }
 
   // フォールバック（通常は到達しない）
-  return restaurants[Math.floor(Math.random() * restaurants.length)];
+  return shuffledRestaurants[Math.floor(Math.random() * shuffledRestaurants.length)];
 };
 
 // 近隣の大型施設（ビル・商業施設）を検索
