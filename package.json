@@ -14,7 +14,7 @@
     "p-map": "^7.0.4",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
-    "remeda": "^2.33.4"
+    "remeda": "^2.33.6"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.2",
