@@ -48,14 +48,10 @@ export const BuildingSelector = ({
   }, [location, radius]);
 
   const toggleBuilding = (building: Building) => {
-    const isSelected = selectedBuildings.some(
-      (b) => b.place_id === building.place_id
-    );
+    const isSelected = selectedBuildings.some((b) => b.place_id === building.place_id);
 
     if (isSelected) {
-      onBuildingsChange(
-        selectedBuildings.filter((b) => b.place_id !== building.place_id)
-      );
+      onBuildingsChange(selectedBuildings.filter((b) => b.place_id !== building.place_id));
     } else {
       onBuildingsChange([...selectedBuildings, building]);
     }
@@ -92,15 +88,11 @@ export const BuildingSelector = ({
   return (
     <div className="building-selector">
       <h3>📍 近隣の施設を選択してください</h3>
-      <p className="building-selector-help">
-        レストランを探す施設を選択してください（複数選択可）
-      </p>
+      <p className="building-selector-help">レストランを探す施設を選択してください（複数選択可）</p>
 
       <div className="buildings-list">
         {buildings.map((building) => {
-          const isSelected = selectedBuildings.some(
-            (b) => b.place_id === building.place_id
-          );
+          const isSelected = selectedBuildings.some((b) => b.place_id === building.place_id);
           return (
             <button
               key={building.place_id}
@@ -108,9 +100,7 @@ export const BuildingSelector = ({
               onClick={() => toggleBuilding(building)}
             >
               <div className="building-info">
-                <span className="building-type">
-                  {getBuildingTypeLabel(building.types)}
-                </span>
+                <span className="building-type">{getBuildingTypeLabel(building.types)}</span>
                 <span className="building-name">{building.name}</span>
                 {building.vicinity && (
                   <span className="building-vicinity">{building.vicinity}</span>

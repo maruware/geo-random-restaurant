@@ -20,18 +20,16 @@ function App() {
     error: locationError,
     getCurrentLocation,
   } = useGeolocation();
+
   const [searchRadius, setSearchRadius] = useState(1000);
   const [minRating, setMinRating] = useState(3.5);
   const [openOnly, setOpenOnly] = useState(false); // 営業中フィルタの状態追加
   const [indoorMode, setIndoorMode] = useState(false); // 屋内施設優先モード
   const [selectedBuildings, setSelectedBuildings] = useState<Building[]>([]); // 選択された施設
-  const [selectedRestaurant, setSelectedRestaurant] =
-    useState<Restaurant | null>(null);
+  const [selectedRestaurant, setSelectedRestaurant] = useState<Restaurant | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [restaurantHistory, setRestaurantHistory] = useState<
-    Map<string, number>
-  >(new Map()); // レストラン選択履歴
+  const [restaurantHistory, setRestaurantHistory] = useState<Map<string, number>>(new Map()); // レストラン選択履歴
 
   const findRandomRestaurant = useCallback(async () => {
     if (!location) {
@@ -58,7 +56,7 @@ function App() {
           selectedBuildings,
           minRating,
           openOnly,
-          restaurantHistory
+          restaurantHistory,
         );
       } else {
         restaurant = await searchNearbyRestaurantsWithProbability(
@@ -66,7 +64,7 @@ function App() {
           searchRadius,
           minRating,
           openOnly,
-          restaurantHistory
+          restaurantHistory,
         );
       }
 

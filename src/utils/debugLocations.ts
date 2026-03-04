@@ -35,14 +35,14 @@ export const getDebugLocation = (): Omit<Location, "address"> | null => {
   if (!location) {
     console.warn(
       `デバッグ位置 '${debugLocationName}' が見つかりません。利用可能な位置: ${Object.keys(
-        DEBUG_LOCATIONS
-      ).join(", ")}`
+        DEBUG_LOCATIONS,
+      ).join(", ")}`,
     );
     return null;
   }
 
   console.info(
-    `🐛 デバッグモード: ${debugLocationName} (${location.lat}, ${location.lng}) を使用しています`
+    `🐛 デバッグモード: ${debugLocationName} (${location.lat}, ${location.lng}) を使用しています`,
   );
 
   return location;

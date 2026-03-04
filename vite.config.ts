@@ -9,11 +9,7 @@ export default defineConfig(({ command }) => {
       react(),
       VitePWA({
         registerType: "autoUpdate",
-        includeAssets: [
-          "favicon.ico",
-          "apple-touch-icon.png",
-          "favicon-*.png",
-        ],
+        includeAssets: ["favicon.ico", "apple-touch-icon.png", "favicon-*.png"],
         manifest: {
           name: "ランダムレストラン",
           short_name: "ランダムレストラン",

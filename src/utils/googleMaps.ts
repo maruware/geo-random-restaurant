@@ -15,16 +15,13 @@ export const getGoogleMapsUrl = (restaurant: Restaurant): string => {
 
   // フォールバック: 緯度経度が利用できない場合は名前を使用
   return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(
-    restaurant.name
+    restaurant.name,
   )}&query_place_id=${restaurant.place_id}`;
 };
 
 // コールバックベースのAPIをPromise化するヘルパー関数（PlacesService用）
 const promisifyPlacesCallback = <T>(
-  callback: (
-    resolve: (value: T) => void,
-    reject: (error: Error) => void
-  ) => void
+  callback: (resolve: (value: T) => void, reject: (error: Error) => void) => void,
 ): Promise<T> => {
   return new Promise<T>((resolve, reject) => {
     callback(resolve, reject);
@@ -34,33 +31,29 @@ const promisifyPlacesCallback = <T>(
 // Place Detailsを取得するヘルパー関数
 const getPlaceDetails = async (
   service: google.maps.places.PlacesService,
-  placeId: string
+  placeId: string,
 ): Promise<google.maps.places.PlaceResult | null> => {
-  return promisifyPlacesCallback<google.maps.places.PlaceResult | null>(
-    (resolve, reject) => {
-      service.getDetails(
-        {
-          placeId: placeId,
-          fields: ["opening_hours"],
-        },
-        (
-          result: google.maps.places.PlaceResult | null,
-          status: google.maps.places.PlacesServiceStatus
-        ) => {
-          if (status === google.maps.places.PlacesServiceStatus.OK) {
-            resolve(result);
-          } else {
-            reject(new Error(`詳細情報の取得に失敗: ${status}`));
-          }
+  return promisifyPlacesCallback<google.maps.places.PlaceResult | null>((resolve, reject) => {
+    service.getDetails(
+      {
+        placeId: placeId,
+        fields: ["opening_hours"],
+      },
+      (
+        result: google.maps.places.PlaceResult | null,
+        status: google.maps.places.PlacesServiceStatus,
+      ) => {
+        if (status === google.maps.places.PlacesServiceStatus.OK) {
+          resolve(result);
+        } else {
+          reject(new Error(`詳細情報の取得に失敗: ${status}`));
         }
-      );
-    }
-  );
+      },
+    );
+  });
 };
 
-export const getAddressFromCoordinates = async (
-  location: Location
-): Promise<string> => {
+export const getAddressFromCoordinates = async (location: Location): Promise<string> => {
   const { Geocoder } = await importLibrary("geocoding");
 
   const geocoder = new Geocoder();
@@ -102,7 +95,7 @@ export const calculateDistance = (
   lat1: number,
   lng1: number,
   lat2: number,
-  lng2: number
+  lng2: number,
 ): number => {
   const R = 6371; // 地球の半径（km）
   const dLat = ((lat2 - lat1) * Math.PI) / 180;
@@ -130,11 +123,12 @@ export const formatDistance = (distanceKm: number): string => {
 // 徒歩経路の距離と時間を計算する関数
 export const calculateWalkingDistance = async (
   origin: Location,
-  destination: { lat: number; lng: number }
+  destination: { lat: number; lng: number },
 ): Promise<{ distance: string; duration: string }> => {
-  const [{ DirectionsService, TravelMode }, { UnitSystem }] = await Promise.all(
-    [importLibrary("routes"), importLibrary("core")]
-  );
+  const [{ DirectionsService, TravelMode }, { UnitSystem }] = await Promise.all([
+    importLibrary("routes"),
+    importLibrary("core"),
+  ]);
 
   const directionsService = new DirectionsService();
 
@@ -167,7 +161,7 @@ export const calculateWalkingDistance = async (
       origin.lat,
       origin.lng,
       destination.lat,
-      destination.lng
+      destination.lng,
     );
     const formattedDistance = formatDistance(directDistance);
     const estimatedDuration = Math.round((directDistance * 1000) / 80); // 時速4.8km (80m/分) で概算
@@ -180,19 +174,14 @@ export const calculateWalkingDistance = async (
 };
 
 // 円内のランダムな点を生成する関数
-const generateRandomPointInRadius = (
-  center: Location,
-  radiusMeters: number
-): Location => {
+const generateRandomPointInRadius = (center: Location, radiusMeters: number): Location => {
   // 一様分布のために sqrt を使用（中心に偏らないように）
   const r = radiusMeters * Math.sqrt(Math.random());
   const theta = Math.random() * 2 * Math.PI;
 
   // メートルを緯度経度の差分に変換（概算）
   const deltaLat = (r * Math.cos(theta)) / 111320; // 1度 ≈ 111.32km
-  const deltaLng =
-    (r * Math.sin(theta)) /
-    (111320 * Math.cos((center.lat * Math.PI) / 180));
+  const deltaLng = (r * Math.sin(theta)) / (111320 * Math.cos((center.lat * Math.PI) / 180));
 
   return {
     lat: center.lat + deltaLat,
@@ -206,7 +195,7 @@ export const searchNearbyRestaurantsWithProbability = async (
   radius: number,
   minRating: number,
   openOnly: boolean = false,
-  restaurantHistory: Map<string, number> = new Map()
+  restaurantHistory: Map<string, number> = new Map(),
 ): Promise<Restaurant> => {
   const [{ PlacesService, RankBy }, { LatLng }] = await Promise.all([
     importLibrary("places"),
@@ -247,15 +236,14 @@ export const searchNearbyRestaurantsWithProbability = async (
       location.lat,
       location.lng,
       place.geometry.location.lat(),
-      place.geometry.location.lng()
+      place.geometry.location.lng(),
     );
     return distance <= radiusKm;
   });
 
   // 評価フィルタを適用
   const filteredRestaurants = withinRadiusResults.filter(
-    (place: google.maps.places.PlaceResult) =>
-      place.rating && place.rating >= minRating
+    (place: google.maps.places.PlaceResult) => place.rating && place.rating >= minRating,
   );
 
   if (filteredRestaurants.length === 0) {
@@ -266,10 +254,7 @@ export const searchNearbyRestaurantsWithProbability = async (
   }
 
   // 確率調整を適用してレストランを選択
-  const selected = selectRestaurantWithProbability(
-    filteredRestaurants,
-    restaurantHistory
-  );
+  const selected = selectRestaurantWithProbability(filteredRestaurants, restaurantHistory);
 
   // 詳細な営業時間情報を取得
   let detailedOpeningHours = selected.opening_hours;
@@ -299,27 +284,25 @@ export const searchNearbyRestaurantsWithProbability = async (
 // 履歴に基づいて確率調整したレストラン選択
 const selectRestaurantWithProbability = (
   restaurants: google.maps.places.PlaceResult[],
-  history: Map<string, number>
+  history: Map<string, number>,
 ): google.maps.places.PlaceResult => {
   // まず配列をシャッフルして、API返却順の偏りを排除
   const shuffledRestaurants = shuffle(restaurants);
 
   // 各レストランの重みを計算
-  const weights = shuffledRestaurants.map(
-    (restaurant: google.maps.places.PlaceResult) => {
-      const placeId = restaurant.place_id!;
-      const selectionCount = history.get(placeId) || 0;
-      // 選択回数に応じて重みを計算（50%ずつ減少）
-      const weight = Math.pow(0.5, selectionCount);
-      return { restaurant, weight };
-    }
-  );
+  const weights = shuffledRestaurants.map((restaurant: google.maps.places.PlaceResult) => {
+    const placeId = restaurant.place_id!;
+    const selectionCount = history.get(placeId) || 0;
+    // 選択回数に応じて重みを計算（50%ずつ減少）
+    const weight = Math.pow(0.5, selectionCount);
+    return { restaurant, weight };
+  });
 
   // 重み付き合計を計算
   const totalWeight = weights.reduce(
     (sum: number, item: { restaurant: google.maps.places.PlaceResult; weight: number }) =>
       sum + item.weight,
-    0
+    0,
   );
 
   // ランダムな値を生成
@@ -340,7 +323,7 @@ const selectRestaurantWithProbability = (
 // 近隣の大型施設（ビル・商業施設）を検索
 export const searchNearbyBuildings = async (
   location: Location,
-  radius: number
+  radius: number,
 ): Promise<Building[]> => {
   const [{ PlacesService }, { LatLng }] = await Promise.all([
     importLibrary("places"),
@@ -362,54 +345,44 @@ export const searchNearbyBuildings = async (
       };
 
       try {
-        const buildings = await promisifyPlacesCallback<Building[]>(
-          (resolve) => {
-            service.nearbySearch(
-              request,
-              (
-                results: google.maps.places.PlaceResult[] | null,
-                status: google.maps.places.PlacesServiceStatus
-              ) => {
-                if (
-                  status === google.maps.places.PlacesServiceStatus.OK &&
-                  results
-                ) {
-                  const mappedBuildings = results
-                    .filter(
-                      (place) =>
-                        place.place_id && place.name && place.geometry?.location
-                    )
-                    .map((place) => ({
-                      place_id: place.place_id!,
-                      name: place.name!,
-                      vicinity: place.vicinity || "",
-                      lat: place.geometry!.location!.lat(),
-                      lng: place.geometry!.location!.lng(),
-                      types: place.types || [],
-                    }));
-                  resolve(mappedBuildings);
-                } else {
-                  resolve([]);
-                }
+        const buildings = await promisifyPlacesCallback<Building[]>((resolve) => {
+          service.nearbySearch(
+            request,
+            (
+              results: google.maps.places.PlaceResult[] | null,
+              status: google.maps.places.PlacesServiceStatus,
+            ) => {
+              if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                const mappedBuildings = results
+                  .filter((place) => place.place_id && place.name && place.geometry?.location)
+                  .map((place) => ({
+                    place_id: place.place_id!,
+                    name: place.name!,
+                    vicinity: place.vicinity || "",
+                    lat: place.geometry!.location!.lat(),
+                    lng: place.geometry!.location!.lng(),
+                    types: place.types || [],
+                  }));
+                resolve(mappedBuildings);
+              } else {
+                resolve([]);
               }
-            );
-          }
-        );
+            },
+          );
+        });
         return buildings;
       } catch (error) {
         console.warn(`Type ${type} の検索に失敗:`, error);
         return [];
       }
     },
-    { concurrency: 3 }
+    { concurrency: 3 },
   );
 
   const allBuildings = allBuildingsArrays.flat();
 
   // place_idで重複を削除
-  const uniqueBuildings = Array.from(
-    new Map(allBuildings.map((b) => [b.place_id, b])).values()
-  );
+  const uniqueBuildings = Array.from(new Map(allBuildings.map((b) => [b.place_id, b])).values());
 
   return uniqueBuildings;
 };
@@ -419,7 +392,7 @@ export const searchRestaurantsInBuildings = async (
   buildings: Building[],
   minRating: number,
   openOnly: boolean = false,
-  restaurantHistory: Map<string, number> = new Map()
+  restaurantHistory: Map<string, number> = new Map(),
 ): Promise<Restaurant> => {
   const [{ PlacesService }, { LatLng }] = await Promise.all([
     importLibrary("places"),
@@ -441,64 +414,59 @@ export const searchRestaurantsInBuildings = async (
       };
 
       try {
-        const restaurants = await promisifyPlacesCallback<
-          google.maps.places.PlaceResult[]
-        >((resolve) => {
-          service.textSearch(
-            request,
-            (
-              results: google.maps.places.PlaceResult[] | null,
-              status: google.maps.places.PlacesServiceStatus
-            ) => {
-              if (
-                status === google.maps.places.PlacesServiceStatus.OK &&
-                results
-              ) {
-                // 評価フィルタと住所フィルタを適用
-                const filteredResults = results.filter((place) => {
-                  // 評価チェック
-                  if (!place.rating || place.rating < minRating) {
-                    return false;
-                  }
-
-                  // 住所に施設名が含まれているかチェック（より厳密に施設内に絞る）
-                  if (place.formatted_address) {
-                    const addressLower = place.formatted_address.toLowerCase();
-                    const buildingNameLower = building.name.toLowerCase();
-                    // 施設名が住所に含まれているか、または非常に近い場合のみ
-                    if (
-                      addressLower.includes(buildingNameLower) ||
-                      place.vicinity?.toLowerCase().includes(buildingNameLower)
-                    ) {
-                      return true;
+        const restaurants = await promisifyPlacesCallback<google.maps.places.PlaceResult[]>(
+          (resolve) => {
+            service.textSearch(
+              request,
+              (
+                results: google.maps.places.PlaceResult[] | null,
+                status: google.maps.places.PlacesServiceStatus,
+              ) => {
+                if (status === google.maps.places.PlacesServiceStatus.OK && results) {
+                  // 評価フィルタと住所フィルタを適用
+                  const filteredResults = results.filter((place) => {
+                    // 評価チェック
+                    if (!place.rating || place.rating < minRating) {
+                      return false;
                     }
-                  }
 
-                  // 距離が非常に近い場合も許可（20m以内）
-                  if (place.geometry?.location) {
-                    const distance = calculateDistance(
-                      building.lat,
-                      building.lng,
-                      place.geometry.location.lat(),
-                      place.geometry.location.lng()
-                    );
-                    return distance < 0.02; // 20m以内
-                  }
+                    // 住所に施設名が含まれているかチェック（より厳密に施設内に絞る）
+                    if (place.formatted_address) {
+                      const addressLower = place.formatted_address.toLowerCase();
+                      const buildingNameLower = building.name.toLowerCase();
+                      // 施設名が住所に含まれているか、または非常に近い場合のみ
+                      if (
+                        addressLower.includes(buildingNameLower) ||
+                        place.vicinity?.toLowerCase().includes(buildingNameLower)
+                      ) {
+                        return true;
+                      }
+                    }
 
-                  return false;
-                });
-                resolve(filteredResults);
-              } else if (
-                status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS
-              ) {
-                // 結果が0件の場合は空配列を返す
-                resolve([]);
-              } else {
-                resolve([]);
-              }
-            }
-          );
-        });
+                    // 距離が非常に近い場合も許可（20m以内）
+                    if (place.geometry?.location) {
+                      const distance = calculateDistance(
+                        building.lat,
+                        building.lng,
+                        place.geometry.location.lat(),
+                        place.geometry.location.lng(),
+                      );
+                      return distance < 0.02; // 20m以内
+                    }
+
+                    return false;
+                  });
+                  resolve(filteredResults);
+                } else if (status === google.maps.places.PlacesServiceStatus.ZERO_RESULTS) {
+                  // 結果が0件の場合は空配列を返す
+                  resolve([]);
+                } else {
+                  resolve([]);
+                }
+              },
+            );
+          },
+        );
 
         return restaurants;
       } catch (error) {
@@ -506,27 +474,22 @@ export const searchRestaurantsInBuildings = async (
         return [];
       }
     },
-    { concurrency: 2 }
+    { concurrency: 2 },
   );
 
   const allRestaurants = allRestaurantsArrays.flat();
 
   // place_idで重複を削除
   const uniqueRestaurants = Array.from(
-    new Map(allRestaurants.map((r) => [r.place_id, r])).values()
+    new Map(allRestaurants.map((r) => [r.place_id, r])).values(),
   );
 
   if (uniqueRestaurants.length === 0) {
-    throw new Error(
-      "選択した施設内に条件に合うレストランが見つかりませんでした"
-    );
+    throw new Error("選択した施設内に条件に合うレストランが見つかりませんでした");
   }
 
   // 確率調整を適用してレストランを選択
-  const selected = selectRestaurantWithProbability(
-    uniqueRestaurants,
-    restaurantHistory
-  );
+  const selected = selectRestaurantWithProbability(uniqueRestaurants, restaurantHistory);
 
   // 詳細な営業時間情報を取得
   let detailedOpeningHours = selected.opening_hours;

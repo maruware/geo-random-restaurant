@@ -70,7 +70,7 @@ export const useGeolocation = () => {
         enableHighAccuracy: true,
         timeout: 10000,
         maximumAge: 60000,
-      }
+      },
     );
   }, []);
 
