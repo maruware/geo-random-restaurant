@@ -12,6 +12,7 @@ import { SearchSettingsComponent } from "./components/SearchSettings";
 import { LocationSection } from "./components/LocationSection";
 import { RestaurantResult } from "./components/RestaurantResult";
 import { BuildingSelector } from "./components/BuildingSelector";
+import { useWebHaptics } from "web-haptics/react";
 
 function App() {
   const {
@@ -30,6 +31,11 @@ function App() {
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [restaurantHistory, setRestaurantHistory] = useState<Map<string, number>>(new Map()); // レストラン選択履歴
+  const { trigger } = useWebHaptics();
+
+  const triggerHapticFeedback = useCallback(() => {
+    trigger([{ duration: 35 }, { duration: 50 }, { duration: 70 }], { intensity: 1 });
+  }, [trigger]);
 
   const findRandomRestaurant = useCallback(async () => {
     if (!location) {
@@ -83,6 +89,8 @@ function App() {
         }
       }
 
+      triggerHapticFeedback();
+
       // 選択されたレストランを履歴に追加
       setRestaurantHistory((prev) => {
         const newHistory = new Map(prev);
@@ -99,12 +107,13 @@ function App() {
     }
   }, [
     location,
-    searchRadius,
-    minRating,
-    openOnly,
     indoorMode,
     selectedBuildings,
+    triggerHapticFeedback,
+    minRating,
+    openOnly,
     restaurantHistory,
+    searchRadius,
   ]);
 
   const isLoading = locationLoading || isSearching;
