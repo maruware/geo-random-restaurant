@@ -13,14 +13,14 @@ export const StarRating = ({ rating }: StarRatingProps) => {
     stars.push(
       <span key={i} className="star full">
         ★
-      </span>
+      </span>,
     );
   }
   if (hasHalfStar) {
     stars.push(
       <span key="half" className="star half">
         ☆
-      </span>
+      </span>,
     );
   }
   const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
@@ -28,7 +28,7 @@ export const StarRating = ({ rating }: StarRatingProps) => {
     stars.push(
       <span key={`empty-${i}`} className="star empty">
         ☆
-      </span>
+      </span>,
     );
   }
   return <>{stars}</>;

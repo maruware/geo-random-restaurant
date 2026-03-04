@@ -1,11 +1,7 @@
 import { useEffect, useRef } from "react";
 import type { Restaurant, Location } from "../types";
 import { StarRating } from "./StarRating";
-import {
-  getGoogleMapsUrl,
-  calculateDistance,
-  formatDistance,
-} from "../utils/googleMaps";
+import { getGoogleMapsUrl, calculateDistance, formatDistance } from "../utils/googleMaps";
 import "./RestaurantResult.css";
 
 interface RestaurantResultProps {
@@ -44,7 +40,7 @@ export const RestaurantResult = ({
         currentLocation.lat,
         currentLocation.lng,
         restaurant.lat,
-        restaurant.lng
+        restaurant.lng,
       );
       return `約${formatDistance(distance)} (直線距離)`;
     }
@@ -80,9 +76,7 @@ export const RestaurantResult = ({
     };
 
     const todayHours = getTodayHours();
-    const formattedTodayHours = todayHours
-      ? formatTimeDisplay(todayHours)
-      : null;
+    const formattedTodayHours = todayHours ? formatTimeDisplay(todayHours) : null;
 
     // 全営業時間も同様にフォーマット
     const formattedAllHours = weekdayText?.map(formatTimeDisplay);
@@ -124,11 +118,7 @@ export const RestaurantResult = ({
 
         {openingHoursInfo && (
           <div className="opening-hours">
-            <p
-              className={`status ${
-                openingHoursInfo.isOpen ? "open" : "closed"
-              }`}
-            >
+            <p className={`status ${openingHoursInfo.isOpen ? "open" : "closed"}`}>
               {openingHoursInfo.isOpen ? "🟢 営業中" : "🔴 営業時間外"}
             </p>
             {openingHoursInfo.todayHours && (
@@ -136,19 +126,18 @@ export const RestaurantResult = ({
                 🕐 本日: {openingHoursInfo.todayHours.replace(/^[^:]+:\s*/, "")}
               </p>
             )}
-            {openingHoursInfo.allHours &&
-              openingHoursInfo.allHours.length > 0 && (
-                <details className="all-hours">
-                  <summary>📅 営業時間詳細</summary>
-                  <div className="hours-list">
-                    {openingHoursInfo.allHours.map((hours, index) => (
-                      <p key={index} className="hours-item">
-                        {hours}
-                      </p>
-                    ))}
-                  </div>
-                </details>
-              )}
+            {openingHoursInfo.allHours && openingHoursInfo.allHours.length > 0 && (
+              <details className="all-hours">
+                <summary>📅 営業時間詳細</summary>
+                <div className="hours-list">
+                  {openingHoursInfo.allHours.map((hours, index) => (
+                    <p key={index} className="hours-item">
+                      {hours}
+                    </p>
+                  ))}
+                </div>
+              </details>
+            )}
           </div>
         )}
 
