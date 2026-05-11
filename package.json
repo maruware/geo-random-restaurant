@@ -13,8 +13,8 @@
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
     "p-map": "^7.0.4",
-    "react": "^19.2.5",
-    "react-dom": "^19.2.5",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
     "remeda": "^2.34.0"
   },
   "devDependencies": {
